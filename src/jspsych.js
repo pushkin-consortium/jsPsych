@@ -1,37 +1,37 @@
-/* eslint-disable camelcase */
 /**
  * jspsych.js
  * Josh de Leeuw
  *
  * documentation: docs.jspsych.org
  *
- * */
-const jsPsych = (function () {
-  const core = {};
+ **/
+const jsPsych = (function() {
+
+  var core = {};
 
   //
   // private variables
   //
 
   // options
-  let opts = {};
+  var opts = {};
   // experiment timeline
-  let timeline;
+  var timeline;
   // flow control
-  let global_trial_index = 0;
-  let current_trial = {};
-  let current_trial_finished = false;
+  var global_trial_index = 0;
+  var current_trial = {};
+  var current_trial_finished = false;
   // target DOM element
-  let DOM_container;
-  let DOM_target;
+  var DOM_container;
+  var DOM_target;
   // time that the experiment began
-  let exp_start_time;
+  var exp_start_time;
   // is the experiment paused?
-  let paused = false;
-  let waiting = false;
+  var paused = false;
+  var waiting = false;
   // done loading?
-  let loaded = false;
-  let loadfail = false;
+  var loaded = false;
+  var loadfail = false;
 
   // storing a single webaudio context to prevent problems with multiple inits
   // of jsPsych
@@ -51,9 +51,10 @@ const jsPsych = (function () {
   // public methods
   //
 
-  core.init = function (options) {
-    if (typeof options.timeline === 'undefined') {
-      console.error('No timeline declared in jsPsych.init. Cannot start experiment.');
+  core.init = function(options) {
+
+    if(typeof options.timeline === 'undefined'){
+      console.error('No timeline declared in jsPsych.init. Cannot start experiment.')
     }
 
     // reset variables
@@ -67,44 +68,44 @@ const jsPsych = (function () {
     loadfail = false;
     jsPsych.data.reset();
 
-    const defaults = {
-      display_element: undefined,
-      on_finish(data) {
+    var defaults = {
+      'display_element': undefined,
+      'on_finish': function(data) {
         return undefined;
       },
-      on_trial_start(trial) {
+      'on_trial_start': function(trial) {
         return undefined;
       },
-      on_trial_finish() {
+      'on_trial_finish': function() {
         return undefined;
       },
-      on_data_update(data) {
+      'on_data_update': function(data) {
         return undefined;
       },
-      on_interaction_data_update(data) {
+      'on_interaction_data_update': function(data){
         return undefined;
       },
-      preload_images: [],
-      preload_audio: [],
-      use_webaudio: true,
-      exclusions: {},
-      show_progress_bar: false,
-      auto_update_progress_bar: true,
-      auto_preload: true,
-      show_preload_progress_bar: true,
-      max_load_time: 60000,
-      max_preload_attempts: 10,
-      default_iti: 0,
+      'preload_images': [],
+      'preload_audio': [],
+      'use_webaudio': true,
+      'exclusions': {},
+      'show_progress_bar': false,
+      'auto_update_progress_bar': true,
+      'auto_preload': true,
+      'show_preload_progress_bar': true,
+      'max_load_time': 60000,
+      'max_preload_attempts': 10,
+      'default_iti': 0
     };
 
     // override default options if user specifies an option
-    opts = { ...defaults, ...options };
+    opts = Object.assign({}, defaults, options);
 
     // set DOM element where jsPsych will render content
     // if undefined, then jsPsych will use the <body> tag and the entire page
-    if (typeof opts.display_element === 'undefined') {
+    if(typeof opts.display_element == 'undefined'){
       // check if there is a body element on the page
-      const body = document.querySelector('body');
+      var body = document.querySelector('body');
       if (body === null) {
         document.documentElement.appendChild(document.createElement('body'));
       }
@@ -122,9 +123,9 @@ const jsPsych = (function () {
       if (opts.display_element instanceof Element) {
         var display = opts.display_element;
       } else {
-        var display = document.querySelector(`#${opts.display_element}`);
+        var display = document.querySelector('#' + opts.display_element);
       }
-      if (display === null) {
+      if(display === null) {
         console.error('The display_element specified in jsPsych.init() does not exist in the DOM.');
       } else {
         opts.display_element = display;
@@ -138,14 +139,14 @@ const jsPsych = (function () {
     opts.display_element.tabIndex = 0;
 
     // add CSS class to DOM_target
-    if (opts.display_element.className.indexOf('jspsych-display-element') == -1) {
+    if(opts.display_element.className.indexOf('jspsych-display-element') == -1){
       opts.display_element.className += ' jspsych-display-element';
     }
     DOM_target.className += 'jspsych-content';
 
     // create experiment timeline
     timeline = new TimelineNode({
-      timeline: opts.timeline,
+      timeline: opts.timeline
     });
 
     // initialize audio context based on options and browser capabilities
@@ -161,14 +162,14 @@ const jsPsych = (function () {
 
     // check exclusions before continuing
     checkExclusions(opts.exclusions,
-      () => {
+      function(){
         // success! user can continue...
         // start experiment, with or without preloading
-        if (opts.auto_preload) {
+        if(opts.auto_preload){
           jsPsych.pluginAPI.autoPreload(timeline, startExperiment, opts.preload_images, opts.preload_audio, opts.show_preload_progress_bar);
-          if (opts.max_load_time > 0) {
-            setTimeout(() => {
-              if (!loaded && !loadfail) {
+          if(opts.max_load_time > 0){
+            setTimeout(function(){
+              if(!loaded && !loadfail){
                 core.loadFail();
               }
             }, opts.max_load_time);
@@ -177,55 +178,58 @@ const jsPsych = (function () {
           startExperiment();
         }
       },
-      () => {
+      function(){
         // fail. incompatible user.
 
-      });
+      }
+    );
   };
 
-  core.progress = function () {
-    const percent_complete = typeof timeline === 'undefined' ? 0 : timeline.percentComplete();
+  core.progress = function() {
 
-    const obj = {
-      total_trials: typeof timeline === 'undefined' ? undefined : timeline.length(),
-      current_trial_global: global_trial_index,
-      percent_complete,
+    var percent_complete = typeof timeline == 'undefined' ? 0 : timeline.percentComplete();
+
+    var obj = {
+      "total_trials": typeof timeline == 'undefined' ? undefined : timeline.length(),
+      "current_trial_global": global_trial_index,
+      "percent_complete": percent_complete
     };
 
     return obj;
   };
 
-  core.startTime = function () {
+  core.startTime = function() {
     return exp_start_time;
   };
 
-  core.totalTime = function () {
-    if (typeof exp_start_time === 'undefined') { return 0; }
+  core.totalTime = function() {
+    if(typeof exp_start_time == 'undefined'){ return 0; }
     return (new Date()).getTime() - exp_start_time.getTime();
   };
 
-  core.getDisplayElement = function () {
+  core.getDisplayElement = function() {
     return DOM_target;
   };
 
-  core.getDisplayContainerElement = function () {
+  core.getDisplayContainerElement = function(){
     return DOM_container;
-  };
+  }
 
-  core.finishTrial = function (data) {
-    if (current_trial_finished) { return; }
+  core.finishTrial = function(data) {
+
+    if(current_trial_finished){ return; }
     current_trial_finished = true;
 
     // write the data from the trial
-    data = typeof data === 'undefined' ? {} : data;
+    data = typeof data == 'undefined' ? {} : data;
     jsPsych.data.write(data);
 
     // get back the data with all of the defaults in
-    const trial_data = jsPsych.data.get().filter({ trial_index: global_trial_index });
+    var trial_data = jsPsych.data.get().filter({trial_index: global_trial_index});
 
     // for trial-level callbacks, we just want to pass in a reference to the values
     // of the DataCollection, for easy access and editing.
-    const trial_data_values = trial_data.values()[0];
+    var trial_data_values = trial_data.values()[0];
 
     // handle callback at plugin level
     if (typeof current_trial.on_finish === 'function') {
@@ -247,180 +251,188 @@ const jsPsych = (function () {
       } else {
         nextTrial();
       }
-    } else if (current_trial.post_trial_gap > 0) {
-      setTimeout(nextTrial, current_trial.post_trial_gap);
     } else {
-      nextTrial();
+      if (current_trial.post_trial_gap > 0) {
+        setTimeout(nextTrial, current_trial.post_trial_gap);
+      } else {
+        nextTrial();
+      }
     }
-  };
+  }
 
-  core.endExperiment = function (end_message) {
+  core.endExperiment = function(end_message) {
     timeline.end_message = end_message;
     timeline.end();
     jsPsych.pluginAPI.cancelAllKeyboardResponses();
     jsPsych.pluginAPI.clearAllTimeouts();
     core.finishTrial();
-  };
+  }
 
-  core.endCurrentTimeline = function () {
+  core.endCurrentTimeline = function() {
     timeline.endActiveNode();
-  };
+  }
 
-  core.currentTrial = function () {
+  core.currentTrial = function() {
     return current_trial;
   };
 
-  core.initSettings = function () {
+  core.initSettings = function() {
     return opts;
   };
 
-  core.currentTimelineNodeID = function () {
+  core.currentTimelineNodeID = function() {
     return timeline.activeID();
   };
 
-  core.timelineVariable = function (varname, execute) {
-    if (execute) {
+  core.timelineVariable = function(varname, execute){
+    if(execute){
       return timeline.timelineVariable(varname);
+    } else {
+      return function() { return timeline.timelineVariable(varname); }
     }
-    return function () { return timeline.timelineVariable(varname); };
-  };
+  }
 
-  core.addNodeToEndOfTimeline = function (new_timeline, preload_callback) {
+  core.addNodeToEndOfTimeline = function(new_timeline, preload_callback){
     timeline.insert(new_timeline);
-    if (typeof preload_callback !== 'undefinded') {
-      if (opts.auto_preload) {
+    if(typeof preload_callback !== 'undefinded'){
+      if(opts.auto_preload){
         jsPsych.pluginAPI.autoPreload(timeline, preload_callback);
       } else {
         preload_callback();
       }
     }
-  };
+  }
 
-  core.pauseExperiment = function () {
+  core.pauseExperiment = function(){
     paused = true;
-  };
+  }
 
-  core.resumeExperiment = function () {
+  core.resumeExperiment = function(){
     paused = false;
-    if (waiting) {
+    if(waiting){
       waiting = false;
       nextTrial();
     }
-  };
+  }
 
-  core.loadFail = function (message) {
+  core.loadFail = function(message){
     message = message || '<p>The experiment failed to load.</p>';
     loadfail = true;
     DOM_target.innerHTML = message;
-  };
+  }
 
   function TimelineNode(parameters, parent, relativeID) {
+
     // a unique ID for this node, relative to the parent
-    let relative_id;
+    var relative_id;
 
     // store the parent for this node
-    let parent_node;
+    var parent_node;
 
     // parameters for the trial if the node contains a trial
-    let trial_parameters;
+    var trial_parameters;
 
     // parameters for nodes that contain timelines
-    let timeline_parameters;
+    var timeline_parameters;
 
     // stores trial information on a node that contains a timeline
     // used for adding new trials
-    let node_trial_data;
+    var node_trial_data;
 
     // track progress through the node
-    const progress = {
+    var progress = {
       current_location: -1, // where on the timeline (which timelinenode)
       current_variable_set: 0, // which set of variables to use from timeline_variables
       current_repetition: 0, // how many times through the variable set on this run of the node
       current_iteration: 0, // how many times this node has been revisited
-      done: false,
-    };
+      done: false
+    }
 
     // reference to self
-    const self = this;
+    var self = this;
 
     // recursively get the next trial to run.
     // if this node is a leaf (trial), then return the trial.
     // otherwise, recursively find the next trial in the child timeline.
-    this.trial = function () {
-      if (typeof timeline_parameters === 'undefined') {
+    this.trial = function() {
+      if (typeof timeline_parameters == 'undefined') {
         // returns a clone of the trial_parameters to
         // protect functions.
         return jsPsych.utils.deepCopy(trial_parameters);
+      } else {
+        if (progress.current_location >= timeline_parameters.timeline.length) {
+          return null;
+        } else {
+          return timeline_parameters.timeline[progress.current_location].trial();
+        }
       }
-      if (progress.current_location >= timeline_parameters.timeline.length) {
-        return null;
-      }
-      return timeline_parameters.timeline[progress.current_location].trial();
-    };
+    }
 
-    this.markCurrentTrialComplete = function () {
-      if (typeof timeline_parameters === 'undefined') {
+    this.markCurrentTrialComplete = function() {
+      if(typeof timeline_parameters == 'undefined'){
         progress.done = true;
       } else {
         timeline_parameters.timeline[progress.current_location].markCurrentTrialComplete();
       }
-    };
+    }
 
-    this.nextRepetiton = function () {
+    this.nextRepetiton = function() {
       this.setTimelineVariablesOrder();
       progress.current_location = -1;
       progress.current_variable_set = 0;
       progress.current_repetition++;
-      for (let i = 0; i < timeline_parameters.timeline.length; i++) {
+      for (var i = 0; i < timeline_parameters.timeline.length; i++) {
         timeline_parameters.timeline[i].reset();
       }
-    };
+    }
 
     // set the order for going through the timeline variables array
     // TODO: this is where all the sampling options can be implemented
-    this.setTimelineVariablesOrder = function () {
+    this.setTimelineVariablesOrder = function() {
+
       // check to make sure this node has variables
-      if (typeof timeline_parameters === 'undefined' || typeof timeline_parameters.timeline_variables === 'undefined') {
+      if(typeof timeline_parameters === 'undefined' || typeof timeline_parameters.timeline_variables === 'undefined'){
         return;
       }
 
-      let order = [];
-      for (let i = 0; i < timeline_parameters.timeline_variables.length; i++) {
+      var order = [];
+      for(var i=0; i<timeline_parameters.timeline_variables.length; i++){
         order.push(i);
       }
 
-      if (typeof timeline_parameters.sample !== 'undefined') {
-        if (timeline_parameters.sample.type == 'custom') {
+      if(typeof timeline_parameters.sample !== 'undefined'){
+        if(timeline_parameters.sample.type == 'custom'){
           order = timeline_parameters.sample.fn(order);
-        } else if (timeline_parameters.sample.type == 'with-replacement') {
+        } else if(timeline_parameters.sample.type == 'with-replacement'){
           order = jsPsych.randomization.sampleWithReplacement(order, timeline_parameters.sample.size, timeline_parameters.sample.weights);
-        } else if (timeline_parameters.sample.type == 'without-replacement') {
+        } else if(timeline_parameters.sample.type == 'without-replacement'){
           order = jsPsych.randomization.sampleWithoutReplacement(order, timeline_parameters.sample.size);
-        } else if (timeline_parameters.sample.type == 'fixed-repetitions') {
+        } else if(timeline_parameters.sample.type == 'fixed-repetitions'){
           order = jsPsych.randomization.repeat(order, timeline_parameters.sample.size, false);
         }
       }
 
-      if (timeline_parameters.randomize_order) {
+      if(timeline_parameters.randomize_order) {
         order = jsPsych.randomization.shuffle(order);
       }
 
       progress.order = order;
-    };
+    }
 
     // next variable set
-    this.nextSet = function () {
+    this.nextSet = function() {
       progress.current_location = -1;
       progress.current_variable_set++;
-      for (let i = 0; i < timeline_parameters.timeline.length; i++) {
+      for (var i = 0; i < timeline_parameters.timeline.length; i++) {
         timeline_parameters.timeline[i].reset();
       }
-    };
+    }
 
     // update the current trial node to be completed
     // returns true if the node is complete after advance (all subnodes are also complete)
     // returns false otherwise
-    this.advance = function () {
+    this.advance = function() {
+
       // first check to see if done
       if (progress.done) {
         return true;
@@ -430,9 +442,9 @@ const jsPsych = (function () {
       // then try to start the node.
       if (progress.current_location == -1) {
         // check for conditonal function on nodes with timelines
-        if (typeof timeline_parameters !== 'undefined') {
+        if (typeof timeline_parameters != 'undefined') {
           if (typeof timeline_parameters.conditional_function !== 'undefined') {
-            const conditional_result = timeline_parameters.conditional_function();
+            var conditional_result = timeline_parameters.conditional_function();
             // if the conditional_function() returns false, then the timeline
             // doesn't run and is marked as complete.
             if (conditional_result == false) {
@@ -440,8 +452,9 @@ const jsPsych = (function () {
               return true;
             }
             // if the conditonal_function() returns true, then the node can start
-
-            progress.current_location = 0;
+            else {
+              progress.current_location = 0;
+            }
           }
           // if there is no conditional_function, then the node can start
           else {
@@ -456,16 +469,20 @@ const jsPsych = (function () {
 
       // if this node has a timeline, propogate down to the current trial.
       if (typeof timeline_parameters !== 'undefined') {
-        let have_node_to_run = false;
+
+        var have_node_to_run = false;
         // keep incrementing the location in the timeline until one of the nodes reached is incomplete
         while (progress.current_location < timeline_parameters.timeline.length && have_node_to_run == false) {
+
           // check to see if the node currently pointed at is done
-          const target_complete = timeline_parameters.timeline[progress.current_location].advance();
+          var target_complete = timeline_parameters.timeline[progress.current_location].advance();
           if (!target_complete) {
             have_node_to_run = true;
             return false;
+          } else {
+            progress.current_location++;
           }
-          progress.current_location++;
+
         }
 
         // if we've reached the end of the timeline (which, if the code is here, we have)
@@ -481,180 +498,192 @@ const jsPsych = (function () {
         }
 
         // if we're all done with the timeline_variables, then check to see if there are more repetitions
-        if (progress.current_repetition < timeline_parameters.repetitions - 1) {
+        else if (progress.current_repetition < timeline_parameters.repetitions - 1) {
           this.nextRepetiton();
           return this.advance();
         }
 
         // if we're all done with the repetitions, check if there is a loop function.
-        if (typeof timeline_parameters.loop_function !== 'undefined') {
+        else if (typeof timeline_parameters.loop_function !== 'undefined') {
           if (timeline_parameters.loop_function(this.generatedData())) {
             this.reset();
             return parent_node.advance();
+          } else {
+            progress.done = true;
+            return true;
           }
+        }
+
+        // no more loops on this timeline, we're done!
+        else {
           progress.done = true;
           return true;
         }
 
-        // no more loops on this timeline, we're done!
-
-        progress.done = true;
-        return true;
       }
-    };
+    }
 
     // check the status of the done flag
-    this.isComplete = function () {
+    this.isComplete = function() {
       return progress.done;
-    };
+    }
 
     // getter method for timeline variables
-    this.getTimelineVariableValue = function (variable_name) {
-      if (typeof timeline_parameters === 'undefined') {
+    this.getTimelineVariableValue = function(variable_name){
+      if(typeof timeline_parameters == 'undefined'){
         return undefined;
       }
-      const v = timeline_parameters.timeline_variables[progress.order[progress.current_variable_set]][variable_name];
+      var v = timeline_parameters.timeline_variables[progress.order[progress.current_variable_set]][variable_name];
       return v;
-    };
+    }
 
     // recursive upward search for timeline variables
-    this.findTimelineVariable = function (variable_name) {
-      const v = this.getTimelineVariableValue(variable_name);
-      if (typeof v === 'undefined') {
-        if (typeof parent_node !== 'undefined') {
+    this.findTimelineVariable = function(variable_name){
+      var v = this.getTimelineVariableValue(variable_name);
+      if(typeof v == 'undefined'){
+        if(typeof parent_node !== 'undefined'){
           return parent_node.findTimelineVariable(variable_name);
+        } else {
+          return undefined;
         }
-        return undefined;
+      } else {
+        return v;
       }
-      return v;
-    };
+    }
 
     // recursive downward search for active trial to extract timeline variable
-    this.timelineVariable = function (variable_name) {
-      if (typeof timeline_parameters === 'undefined') {
+    this.timelineVariable = function(variable_name){
+      if(typeof timeline_parameters == 'undefined'){
         return this.findTimelineVariable(variable_name);
+      } else {
+        return timeline_parameters.timeline[progress.current_location].timelineVariable(variable_name);
       }
-      return timeline_parameters.timeline[progress.current_location].timelineVariable(variable_name);
-    };
+    }
 
     // recursively get the number of **trials** contained in the timeline
     // assuming that while loops execute exactly once and if conditionals
     // always run
-    this.length = function () {
-      let length = 0;
+    this.length = function() {
+      var length = 0;
       if (typeof timeline_parameters !== 'undefined') {
-        for (let i = 0; i < timeline_parameters.timeline.length; i++) {
+        for (var i = 0; i < timeline_parameters.timeline.length; i++) {
           length += timeline_parameters.timeline[i].length();
         }
       } else {
         return 1;
       }
       return length;
-    };
+    }
 
     // return the percentage of trials completed, grouped at the first child level
     // counts a set of trials as complete when the child node is done
-    this.percentComplete = function () {
-      const total_trials = this.length();
-      let completed_trials = 0;
-      for (let i = 0; i < timeline_parameters.timeline.length; i++) {
+    this.percentComplete = function() {
+      var total_trials = this.length();
+      var completed_trials = 0;
+      for (var i = 0; i < timeline_parameters.timeline.length; i++) {
         if (timeline_parameters.timeline[i].isComplete()) {
           completed_trials += timeline_parameters.timeline[i].length();
         }
       }
-      return (completed_trials / total_trials * 100);
-    };
+      return (completed_trials / total_trials * 100)
+    }
 
     // resets the node and all subnodes to original state
     // but increments the current_iteration counter
-    this.reset = function () {
+    this.reset = function() {
       progress.current_location = -1;
       progress.current_repetition = 0;
       progress.current_variable_set = 0;
       progress.current_iteration++;
       progress.done = false;
       this.setTimelineVariablesOrder();
-      if (typeof timeline_parameters !== 'undefined') {
-        for (let i = 0; i < timeline_parameters.timeline.length; i++) {
+      if (typeof timeline_parameters != 'undefined') {
+        for (var i = 0; i < timeline_parameters.timeline.length; i++) {
           timeline_parameters.timeline[i].reset();
         }
       }
-    };
+
+    }
 
     // mark this node as finished
-    this.end = function () {
+    this.end = function() {
       progress.done = true;
-    };
+    }
 
     // recursively end whatever sub-node is running the current trial
-    this.endActiveNode = function () {
-      if (typeof timeline_parameters === 'undefined') {
+    this.endActiveNode = function() {
+      if (typeof timeline_parameters == 'undefined') {
         this.end();
         parent_node.end();
       } else {
         timeline_parameters.timeline[progress.current_location].endActiveNode();
       }
-    };
+    }
 
     // get a unique ID associated with this node
     // the ID reflects the current iteration through this node.
-    this.ID = function () {
-      let id = '';
-      if (typeof parent_node === 'undefined') {
-        return `0.${progress.current_iteration}`;
+    this.ID = function() {
+      var id = "";
+      if (typeof parent_node == 'undefined') {
+        return "0." + progress.current_iteration;
+      } else {
+        id += parent_node.ID() + "-";
+        id += relative_id + "." + progress.current_iteration;
+        return id;
       }
-      id += `${parent_node.ID()}-`;
-      id += `${relative_id}.${progress.current_iteration}`;
-      return id;
-    };
+    }
 
     // get the ID of the active trial
-    this.activeID = function () {
-      if (typeof timeline_parameters === 'undefined') {
+    this.activeID = function() {
+      if (typeof timeline_parameters == 'undefined') {
         return this.ID();
+      } else {
+        return timeline_parameters.timeline[progress.current_location].activeID();
       }
-      return timeline_parameters.timeline[progress.current_location].activeID();
-    };
+    }
 
     // get all the data generated within this node
-    this.generatedData = function () {
+    this.generatedData = function() {
       return jsPsych.data.getDataByTimelineNode(this.ID());
-    };
+    }
 
     // get all the trials of a particular type
-    this.trialsOfType = function (type) {
-      if (typeof timeline_parameters === 'undefined') {
+    this.trialsOfType = function(type) {
+      if (typeof timeline_parameters == 'undefined'){
         if (trial_parameters.type == type) {
           return trial_parameters;
+        } else {
+          return [];
         }
-        return [];
+      } else {
+        var trials = [];
+        for (var i = 0; i < timeline_parameters.timeline.length; i++) {
+          var t = timeline_parameters.timeline[i].trialsOfType(type);
+          trials = trials.concat(t);
+        }
+        return trials;
       }
-      let trials = [];
-      for (let i = 0; i < timeline_parameters.timeline.length; i++) {
-        const t = timeline_parameters.timeline[i].trialsOfType(type);
-        trials = trials.concat(t);
-      }
-      return trials;
-    };
+    }
 
     // add new trials to end of this timeline
-    this.insert = function (parameters) {
-      if (typeof timeline_parameters === 'undefined') {
+    this.insert = function(parameters){
+      if(typeof timeline_parameters == 'undefined'){
         console.error('Cannot add new trials to a trial-level node.');
       } else {
         timeline_parameters.timeline.push(
-          new TimelineNode(({ ...node_trial_data, ...parameters }), self, timeline_parameters.timeline.length),
+          new TimelineNode(Object.assign({}, node_trial_data, parameters), self, timeline_parameters.timeline.length)
         );
       }
-    };
+    }
 
     // constructor
-    const _construct = (function () {
+    var _construct = function() {
+
       // store a link to the parent of this node
       parent_node = parent;
 
       // create the ID for this node
-      if (typeof parent === 'undefined') {
+      if (typeof parent == 'undefined') {
         relative_id = 0;
       } else {
         relative_id = relativeID;
@@ -662,22 +691,23 @@ const jsPsych = (function () {
 
       // check if there is a timeline parameter
       // if there is, then this node has its own timeline
-      if ((typeof parameters.timeline !== 'undefined') || (typeof jsPsych.plugins[trial_type] === 'function')) {
+      if ((typeof parameters.timeline !== 'undefined') || (typeof jsPsych.plugins[trial_type] == 'function')) {
+
         // create timeline properties
         timeline_parameters = {
           timeline: [],
           loop_function: parameters.loop_function,
           conditional_function: parameters.conditional_function,
           sample: parameters.sample,
-          randomize_order: typeof parameters.randomize_order === 'undefined' ? false : parameters.randomize_order,
-          repetitions: typeof parameters.repetitions === 'undefined' ? 1 : parameters.repetitions,
-          timeline_variables: typeof parameters.timeline_variables === 'undefined' ? [{}] : parameters.timeline_variables,
+          randomize_order: typeof parameters.randomize_order == 'undefined' ? false : parameters.randomize_order,
+          repetitions: typeof parameters.repetitions == 'undefined' ? 1 : parameters.repetitions,
+          timeline_variables: typeof parameters.timeline_variables == 'undefined' ? [{}] : parameters.timeline_variables
         };
 
         self.setTimelineVariablesOrder();
 
         // extract all of the node level data and parameters
-        const node_data = { ...parameters };
+        var node_data = Object.assign({}, parameters);
         delete node_data.timeline;
         delete node_data.conditional_function;
         delete node_data.loop_function;
@@ -688,26 +718,29 @@ const jsPsych = (function () {
         node_trial_data = node_data; // store for later...
 
         // create a TimelineNode for each element in the timeline
-        for (let i = 0; i < parameters.timeline.length; i++) {
-          timeline_parameters.timeline.push(new TimelineNode(({ ...node_data, ...parameters.timeline[i] }), self, i));
+        for (var i = 0; i < parameters.timeline.length; i++) {
+          timeline_parameters.timeline.push(new TimelineNode(Object.assign({}, node_data, parameters.timeline[i]), self, i));
         }
+
       }
       // if there is no timeline parameter, then this node is a trial node
       else {
         // check to see if a valid trial type is defined
         var trial_type = parameters.type;
-        if (typeof trial_type === 'undefined') {
-          console.error(`Trial level node is missing the "type" parameter. The parameters for the node are: ${JSON.stringify(parameters)}`);
-        } else if ((typeof jsPsych.plugins[trial_type] === 'undefined') && (trial_type.toString().replace(/\s/g, '') != 'function(){returntimeline.timelineVariable(varname);}')) {
-          console.error(`No plugin loaded for trials of type "${trial_type}"`);
+        if (typeof trial_type == 'undefined') {
+          console.error('Trial level node is missing the "type" parameter. The parameters for the node are: ' + JSON.stringify(parameters));
+        } else if ((typeof jsPsych.plugins[trial_type] == 'undefined') && (trial_type.toString().replace(/\s/g,'') != "function(){returntimeline.timelineVariable(varname);}")) {
+          console.error('No plugin loaded for trials of type "' + trial_type + '"');
         }
         // create a deep copy of the parameters for the trial
-        trial_parameters = { ...parameters };
+        trial_parameters = Object.assign({}, parameters);
       }
-    }());
+
+    }();
   }
 
   function startExperiment() {
+
     loaded = true;
 
     // show progress bar if requested
@@ -721,19 +754,22 @@ const jsPsych = (function () {
     // begin!
     timeline.advance();
     doTrial(timeline.trial());
+
   }
 
   function finishExperiment() {
-    if (typeof timeline.end_message !== 'undefined') {
+
+    if(typeof timeline.end_message !== 'undefined'){
       DOM_target.innerHTML = timeline.end_message;
     }
 
     opts.on_finish(jsPsych.data.get());
+
   }
 
   function nextTrial() {
     // if experiment is paused, don't do anything.
-    if (paused) {
+    if(paused) {
       waiting = true;
       return;
     }
@@ -742,7 +778,7 @@ const jsPsych = (function () {
 
     // advance timeline
     timeline.markCurrentTrialComplete();
-    const complete = timeline.advance();
+    var complete = timeline.advance();
 
     // update progress bar if shown
     if (opts.show_progress_bar === true && opts.auto_update_progress_bar == true) {
@@ -759,6 +795,7 @@ const jsPsych = (function () {
   }
 
   function doTrial(trial) {
+
     current_trial = trial;
     current_trial_finished = false;
 
@@ -775,7 +812,7 @@ const jsPsych = (function () {
     opts.on_trial_start(trial);
 
     // call trial specific callback if it exists
-    if (typeof trial.on_start === 'function') {
+    if(typeof trial.on_start == 'function'){
       trial.on_start(trial);
     }
 
@@ -786,42 +823,43 @@ const jsPsych = (function () {
     jsPsych.plugins[trial.type].trial(DOM_target, trial);
 
     // call trial specific loaded callback if it exists
-    if (typeof trial.on_load === 'function') {
+    if(typeof trial.on_load == 'function'){
       trial.on_load();
     }
   }
 
-  function evaluateTimelineVariables(trial) {
-    const keys = Object.keys(trial);
+  function evaluateTimelineVariables(trial){
+    var keys = Object.keys(trial);
 
-    for (let i = 0; i < keys.length; i++) {
+    for (var i = 0; i < keys.length; i++) {
       // timeline variables on the root level
-      if (typeof trial[keys[i]] === 'function' && trial[keys[i]].toString().replace(/\s/g, '') == 'function(){returntimeline.timelineVariable(varname);}') {
+      if (typeof trial[keys[i]] == "function" && trial[keys[i]].toString().replace(/\s/g,'') == "function(){returntimeline.timelineVariable(varname);}") {
         trial[keys[i]] = trial[keys[i]].call();
       }
       // timeline variables that are nested in objects
-      if (typeof trial[keys[i]] === 'object' && trial[keys[i]] !== null) {
+      if (typeof trial[keys[i]] == "object" && trial[keys[i]] !== null){
         evaluateTimelineVariables(trial[keys[i]]);
       }
     }
   }
 
-  function evaluateFunctionParameters(trial) {
+  function evaluateFunctionParameters(trial){
+
     // first, eval the trial type if it is a function
-    if (typeof trial.type === 'function') {
+    if(typeof trial.type === 'function'){
       trial.type = trial.type.call();
     }
 
     // now eval the whole trial
-    const keys = Object.keys(trial);
+    var keys = Object.keys(trial);
 
-    for (let i = 0; i < keys.length; i++) {
-      if (keys[i] !== 'type') {
-        if (
-          (typeof jsPsych.plugins.universalPluginParameters[keys[i]] !== 'undefined' && jsPsych.plugins.universalPluginParameters[keys[i]].type !== jsPsych.plugins.parameterType.FUNCTION)
-          || (typeof jsPsych.plugins[trial.type].info.parameters[keys[i]] !== 'undefined' && jsPsych.plugins[trial.type].info.parameters[keys[i]].type !== jsPsych.plugins.parameterType.FUNCTION)
+    for (var i = 0; i < keys.length; i++) {
+      if(keys[i] !== 'type'){
+        if(
+          (typeof jsPsych.plugins.universalPluginParameters[keys[i]] !== 'undefined' && jsPsych.plugins.universalPluginParameters[keys[i]].type !== jsPsych.plugins.parameterType.FUNCTION ) ||
+          (typeof jsPsych.plugins[trial.type].info.parameters[keys[i]] !== 'undefined' && jsPsych.plugins[trial.type].info.parameters[keys[i]].type !== jsPsych.plugins.parameterType.FUNCTION)
         ) {
-          if (typeof trial[keys[i]] === 'function') {
+          if (typeof trial[keys[i]] == "function") {
             trial[keys[i]] = trial[keys[i]].call();
           }
         }
@@ -829,12 +867,12 @@ const jsPsych = (function () {
     }
   }
 
-  function setDefaultValues(trial) {
-    const trial_parameters = Object.keys(jsPsych.plugins[trial.type].info.parameters);
-    for (let i = 0; i < trial_parameters.length; i++) {
-      if (typeof trial[trial_parameters[i]] === 'undefined' || trial[trial_parameters[i]] === null) {
-        if (typeof jsPsych.plugins[trial.type].info.parameters[trial_parameters[i]].default === 'undefined') {
-          console.error(`You must specify a value for the ${trial_parameters[i]} parameter in the ${trial.type} plugin.`);
+  function setDefaultValues(trial){
+    var trial_parameters = Object.keys(jsPsych.plugins[trial.type].info.parameters);
+    for(var i=0; i<trial_parameters.length; i++){
+      if(typeof trial[trial_parameters[i]] == 'undefined' || trial[trial_parameters[i]] === null){
+        if(typeof jsPsych.plugins[trial.type].info.parameters[trial_parameters[i]].default == 'undefined'){
+          console.error('You must specify a value for the '+trial_parameters[i]+' parameter in the '+trial.type+' plugin.');
         } else {
           trial[trial_parameters[i]] = jsPsych.plugins[trial.type].info.parameters[trial_parameters[i]].default;
         }
@@ -842,26 +880,26 @@ const jsPsych = (function () {
     }
   }
 
-  function checkExclusions(exclusions, success, fail) {
-    let clear = true;
+  function checkExclusions(exclusions, success, fail){
+    var clear = true;
 
     // MINIMUM SIZE
-    if (typeof exclusions.min_width !== 'undefined' || typeof exclusions.min_height !== 'undefined') {
-      const mw = typeof exclusions.min_width !== 'undefined' ? exclusions.min_width : 0;
-      const mh = typeof exclusions.min_height !== 'undefined' ? exclusions.min_height : 0;
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      if (w < mw || h < mh) {
+    if(typeof exclusions.min_width !== 'undefined' || typeof exclusions.min_height !== 'undefined'){
+      var mw = typeof exclusions.min_width !== 'undefined' ? exclusions.min_width : 0;
+      var mh = typeof exclusions.min_height !== 'undefined' ? exclusions.min_height : 0;
+      var w = window.innerWidth;
+      var h = window.innerHeight;
+      if(w < mw || h < mh){
         clear = false;
-        var interval = setInterval(() => {
-          const w = window.innerWidth;
-          const h = window.innerHeight;
-          if (w < mw || h < mh) {
-            const msg = `${'<p>Your browser window is too small to complete this experiment. '
-              + 'Please maximize the size of your browser window. If your browser window is already maximized, '
-              + 'you will not be able to complete this experiment.</p>'
-              + '<p>The minimum width is '}${mw}px. Your current width is ${w}px.</p>`
-              + `<p>The minimum height is ${mh}px. Your current height is ${h}px.</p>`;
+        var interval = setInterval(function(){
+          var w = window.innerWidth;
+          var h = window.innerHeight;
+          if(w < mw || h < mh){
+            var msg = '<p>Your browser window is too small to complete this experiment. '+
+              'Please maximize the size of your browser window. If your browser window is already maximized, '+
+              'you will not be able to complete this experiment.</p>'+
+              '<p>The minimum width is '+mw+'px. Your current width is '+w+'px.</p>'+
+              '<p>The minimum height is '+mh+'px. Your current height is '+h+'px.</p>';
             core.getDisplayElement().innerHTML = msg;
           } else {
             clearInterval(interval);
@@ -874,14 +912,14 @@ const jsPsych = (function () {
     }
 
     // WEB AUDIO API
-    if (typeof exclusions.audio !== 'undefined' && exclusions.audio) {
-      if (window.hasOwnProperty('AudioContext') || window.hasOwnProperty('webkitAudioContext')) {
+    if(typeof exclusions.audio !== 'undefined' && exclusions.audio) {
+      if(window.hasOwnProperty('AudioContext') || window.hasOwnProperty('webkitAudioContext')){
         // clear
       } else {
         clear = false;
-        const msg = '<p>Your browser does not support the WebAudio API, which means that you will not '
-          + 'be able to complete the experiment.</p><p>Browsers that support the WebAudio API include '
-          + 'Chrome, Firefox, Safari, and Edge.</p>';
+        var msg = '<p>Your browser does not support the WebAudio API, which means that you will not '+
+          'be able to complete the experiment.</p><p>Browsers that support the WebAudio API include '+
+          'Chrome, Firefox, Safari, and Edge.</p>';
         core.getDisplayElement().innerHTML = msg;
         fail();
         return;
@@ -889,37 +927,38 @@ const jsPsych = (function () {
     }
 
     // GO?
-    if (clear) { success(); }
+    if(clear){ success(); }
   }
 
   function drawProgressBar() {
     document.querySelector('.jspsych-display-element').insertAdjacentHTML('afterbegin',
-      '<div id="jspsych-progressbar-container">'
-      + '<span>Completion Progress</span>'
-      + '<div id="jspsych-progressbar-outer">'
-        + '<div id="jspsych-progressbar-inner"></div>'
-      + '</div></div>');
+      '<div id="jspsych-progressbar-container">'+
+      '<span>Completion Progress</span>'+
+      '<div id="jspsych-progressbar-outer">'+
+        '<div id="jspsych-progressbar-inner"></div>'+
+      '</div></div>');
   }
 
   function updateProgressBar() {
-    const progress = jsPsych.progress();
+    var progress = jsPsych.progress();
 
-    document.querySelector('#jspsych-progressbar-inner').style.width = `${progress.percent_complete}%`;
+    document.querySelector('#jspsych-progressbar-inner').style.width = progress.percent_complete + "%";
   }
 
-  core.setProgressBar = function (proportion_complete) {
-    proportion_complete = Math.max(Math.min(1, proportion_complete), 0);
-    document.querySelector('#jspsych-progressbar-inner').style.width = `${proportion_complete * 100}%`;
-  };
+  core.setProgressBar = function(proportion_complete){
+    proportion_complete = Math.max(Math.min(1,proportion_complete),0);
+    document.querySelector('#jspsych-progressbar-inner').style.width = (proportion_complete*100) + "%";
+  }
 
-  // Leave a trace in the DOM that jspsych was loaded
+  //Leave a trace in the DOM that jspsych was loaded
   document.documentElement.setAttribute('jspsych', 'present');
 
   return core;
-}());
+})();
 
-jsPsych.plugins = (function () {
-  const module = {};
+jsPsych.plugins = (function() {
+
+  var module = {};
 
   // enumerate possible parameter types for plugins
   module.parameterType = {
@@ -935,228 +974,231 @@ jsPsych.plugins = (function () {
     AUDIO: 9,
     VIDEO: 10,
     OBJECT: 11,
-    COMPLEX: 12,
-  };
+    COMPLEX: 12
+  }
 
   module.universalPluginParameters = {
     data: {
       type: module.parameterType.OBJECT,
       pretty_name: 'Data',
       default: {},
-      description: 'Data to add to this trial (key-value pairs)',
+      description: 'Data to add to this trial (key-value pairs)'
     },
     on_start: {
       type: module.parameterType.FUNCTION,
       pretty_name: 'On start',
-      default() { },
-      description: 'Function to execute when trial begins',
+      default: function() { return; },
+      description: 'Function to execute when trial begins'
     },
     on_finish: {
       type: module.parameterType.FUNCTION,
       pretty_name: 'On finish',
-      default() { },
-      description: 'Function to execute when trial is finished',
+      default: function() { return; },
+      description: 'Function to execute when trial is finished'
     },
     on_load: {
       type: module.parameterType.FUNCTION,
       pretty_name: 'On load',
-      default() { },
-      description: 'Function to execute after the trial has loaded',
+      default: function() { return; },
+      description: 'Function to execute after the trial has loaded'
     },
     post_trial_gap: {
       type: module.parameterType.INT,
       pretty_name: 'Post trial gap',
       default: null,
-      description: 'Length of gap between the end of this trial and the start of the next trial',
-    },
-  };
+      description: 'Length of gap between the end of this trial and the start of the next trial'
+    }
+  }
 
   return module;
-}());
+})();
 
-jsPsych.data = (function () {
-  const module = {};
+jsPsych.data = (function() {
+
+  var module = {};
 
   // data storage object
-  let allData = DataCollection();
+  var allData = DataCollection();
 
   // browser interaction event data
-  let interactionData = DataCollection();
+  var interactionData = DataCollection();
 
   // data properties for all trials
-  let dataProperties = {};
+  var dataProperties = {};
 
   // cache the query_string
-  let query_string;
+  var query_string;
 
   // DataCollection
-  function DataCollection(data) {
-    const data_collection = {};
+  function DataCollection(data){
 
-    let trials = typeof data === 'undefined' ? [] : data;
+    var data_collection = {};
 
-    data_collection.push = function (new_data) {
+    var trials = typeof data === 'undefined' ? [] : data;
+
+    data_collection.push = function(new_data){
       trials.push(new_data);
       return data_collection;
-    };
+    }
 
-    data_collection.join = function (other_data_collection) {
+    data_collection.join = function(other_data_collection){
       trials = trials.concat(other_data_collection.values());
       return data_collection;
-    };
+    }
 
-    data_collection.top = function () {
-      if (trials.length <= 1) {
+    data_collection.top = function(){
+      if(trials.length <= 1){
         return data_collection;
+      } else {
+        return DataCollection([trials[trials.length-1]]);
       }
-      return DataCollection([trials[trials.length - 1]]);
-    };
+    }
 
-    data_collection.first = function (n) {
-      if (typeof n === 'undefined') { n = 1; }
-      const out = [];
-      for (let i = 0; i < n; i++) {
+    data_collection.first = function(n){
+      if(typeof n=='undefined'){ n = 1 }
+      var out = [];
+      for(var i=0; i<n; i++){
         out.push(trials[i]);
       }
       return DataCollection(out);
-    };
+    }
 
-    data_collection.last = function (n) {
-      if (typeof n === 'undefined') { n = 1; }
-      const out = [];
-      for (let i = trials.length - n; i < trials.length; i++) {
+    data_collection.last = function(n){
+      if(typeof n=='undefined'){ n = 1 }
+      var out = [];
+      for(var i=trials.length-n; i<trials.length; i++){
         out.push(trials[i]);
       }
       return DataCollection(out);
-    };
+    }
 
-    data_collection.values = function () {
+    data_collection.values = function(){
       return trials;
-    };
+    }
 
-    data_collection.count = function () {
+    data_collection.count = function(){
       return trials.length;
-    };
+    }
 
-    data_collection.readOnly = function () {
+    data_collection.readOnly = function(){
       return DataCollection(jsPsych.utils.deepCopy(trials));
-    };
+    }
 
-    data_collection.addToAll = function (properties) {
-      for (let i = 0; i < trials.length; i++) {
-        for (const key in properties) {
+    data_collection.addToAll = function(properties){
+      for (var i = 0; i < trials.length; i++) {
+        for (var key in properties) {
           trials[i][key] = properties[key];
         }
       }
       return data_collection;
-    };
+    }
 
-    data_collection.addToLast = function (properties) {
-      if (trials.length != 0) {
-        for (const key in properties) {
-          trials[trials.length - 1][key] = properties[key];
+    data_collection.addToLast = function(properties){
+      if(trials.length != 0){
+        for (var key in properties) {
+          trials[trials.length-1][key] = properties[key];
         }
       }
       return data_collection;
-    };
+    }
 
-    data_collection.filter = function (filters) {
+    data_collection.filter = function(filters){
       // [{p1: v1, p2:v2}, {p1:v2}]
       // {p1: v1}
-      if (!Array.isArray(filters)) {
+      if(!Array.isArray(filters)){
         var f = jsPsych.utils.deepCopy([filters]);
       } else {
         var f = jsPsych.utils.deepCopy(filters);
       }
 
-      const filtered_data = [];
-      for (let x = 0; x < trials.length; x++) {
-        let keep = false;
-        for (let i = 0; i < f.length; i++) {
-          let match = true;
-          const keys = Object.keys(f[i]);
-          for (let k = 0; k < keys.length; k++) {
-            if (typeof trials[x][keys[k]] !== 'undefined' && trials[x][keys[k]] == f[i][keys[k]]) {
+      var filtered_data = [];
+      for(var x=0; x < trials.length; x++){
+        var keep = false;
+        for(var i=0; i<f.length; i++){
+          var match = true;
+          var keys = Object.keys(f[i]);
+          for(var k=0; k<keys.length; k++){
+            if(typeof trials[x][keys[k]] !== 'undefined' && trials[x][keys[k]] == f[i][keys[k]]){
               // matches on this key!
             } else {
               match = false;
             }
           }
-          if (match) { keep = true; break; } // can break because each filter is OR.
+          if(match) { keep = true; break; } // can break because each filter is OR.
         }
-        if (keep) {
+        if(keep){
           filtered_data.push(trials[x]);
         }
       }
 
-      const out = DataCollection(filtered_data);
+      var out = DataCollection(filtered_data);
 
       return out;
-    };
+    }
 
-    data_collection.filterCustom = function (fn) {
-      const included = [];
-      for (let i = 0; i < trials.length; i++) {
-        if (fn(trials[i])) {
+    data_collection.filterCustom = function(fn){
+      var included = [];
+      for(var i=0; i<trials.length; i++){
+        if(fn(trials[i])){
           included.push(trials[i]);
         }
       }
       return DataCollection(included);
-    };
+    }
 
-    data_collection.select = function (column) {
-      const values = [];
-      for (let i = 0; i < trials.length; i++) {
-        if (typeof trials[i][column] !== 'undefined') {
+    data_collection.select = function(column){
+      var values = [];
+      for(var i=0; i<trials.length; i++){
+        if(typeof trials[i][column] !== 'undefined'){
           values.push(trials[i][column]);
         }
       }
-      const out = DataColumn();
+      var out = DataColumn();
       out.values = values;
       return out;
-    };
+    }
 
-    data_collection.ignore = function (columns) {
-      if (!Array.isArray(columns)) {
+    data_collection.ignore = function(columns){
+      if(!Array.isArray(columns)){
         columns = [columns];
       }
-      const o = jsPsych.utils.deepCopy(trials);
-      for (let i = 0; i < o.length; i++) {
-        for (const j in columns) {
+      var o = jsPsych.utils.deepCopy(trials);
+      for (var i = 0; i < o.length; i++) {
+        for (var j in columns) {
           delete o[i][columns[j]];
         }
       }
       return DataCollection(o);
-    };
+    }
 
-    data_collection.uniqueNames = function () {
-      const names = [];
+    data_collection.uniqueNames = function(){
+      var names = [];
 
-      for (let i = 0; i < trials.length; i++) {
-        const keys = Object.keys(trials[i]);
-        for (let j = 0; j < keys.length; j++) {
-          if (!names.includes(keys[j])) {
+      for(var i=0; i<trials.length; i++){
+        var keys = Object.keys(trials[i]);
+        for(var j=0; j<keys.length; j++){
+          if(!names.includes(keys[j])){
             names.push(keys[j]);
           }
         }
       }
 
       return names;
-    };
+    }
 
-    data_collection.csv = function () {
+    data_collection.csv = function(){
       return JSON2CSV(trials);
-    };
+    }
 
-    data_collection.json = function (pretty) {
-      if (pretty) {
+    data_collection.json = function(pretty){
+      if(pretty){
         return JSON.stringify(trials, null, '\t');
       }
       return JSON.stringify(trials);
-    };
+    }
 
-    data_collection.localSave = function (format, filename) {
-      let data_string;
+    data_collection.localSave = function(format, filename){
+      var data_string;
 
       if (format == 'JSON' || format == 'json') {
         data_string = data_collection.json();
@@ -1167,176 +1209,180 @@ jsPsych.data = (function () {
       }
 
       saveTextToFile(data_string, filename);
-    };
+    }
 
     return data_collection;
   }
 
   // DataColumn class
-  function DataColumn() {
-    const data_column = {};
+  function DataColumn(){
+    var data_column = {};
 
     data_column.values = [];
 
-    data_column.sum = function () {
-      let s = 0;
-      for (let i = 0; i < data_column.values.length; i++) {
+    data_column.sum = function(){
+      var s = 0;
+      for(var i=0; i<data_column.values.length; i++){
         s += data_column.values[i];
       }
       return s;
-    };
+    }
 
-    data_column.mean = function () {
+    data_column.mean = function(){
       return data_column.sum() / data_column.count();
-    };
+    }
 
-    data_column.median = function () {
-      if (data_column.values.length == 0) { return undefined; }
-      const numbers = data_column.values.slice(0).sort((a, b) => a - b);
-      const middle = Math.floor(numbers.length / 2);
-      const isEven = numbers.length % 2 === 0;
+    data_column.median = function(){
+      if (data_column.values.length == 0) {return undefined};
+      var numbers = data_column.values.slice(0).sort(function(a,b){ return a - b; });
+      var middle = Math.floor(numbers.length / 2);
+      var isEven = numbers.length % 2 === 0;
       return isEven ? (numbers[middle] + numbers[middle - 1]) / 2 : numbers[middle];
-    };
+    }
 
-    data_column.min = function () {
+    data_column.min = function(){
       return Math.min.apply(null, data_column.values);
-    };
+    }
 
-    data_column.max = function () {
+    data_column.max = function(){
       return Math.max.apply(null, data_column.values);
-    };
+    }
 
-    data_column.count = function () {
+    data_column.count = function(){
       return data_column.values.length;
-    };
+    }
 
-    data_column.variance = function () {
-      const mean = data_column.mean();
-      let sum_square_error = 0;
-      for (let i = 0; i < data_column.values.length; i++) {
-        sum_square_error += Math.pow(data_column.values[i] - mean, 2);
+    data_column.variance = function(){
+      var mean = data_column.mean();
+      var sum_square_error = 0;
+      for(var i=0; i<data_column.values.length; i++){
+        sum_square_error += Math.pow(data_column.values[i] - mean,2);
       }
-      const mse = sum_square_error / data_column.values.length;
+      var mse = sum_square_error / data_column.values.length;
       return mse;
-    };
+    }
 
-    data_column.sd = function () {
-      const mse = data_column.variance();
-      const rmse = Math.sqrt(mse);
+    data_column.sd = function(){
+      var mse = data_column.variance();
+      var rmse = Math.sqrt(mse);
       return rmse;
-    };
+    }
 
-    data_column.frequencies = function () {
-      const unique = {};
-      for (let i = 0; i < data_column.values.length; i++) {
-        const v = data_column.values[i];
-        if (typeof unique[v] === 'undefined') {
+    data_column.frequencies = function(){
+      var unique = {}
+      for(var i=0; i<data_column.values.length; i++){
+        var v = data_column.values[i];
+        if(typeof unique[v] == 'undefined'){
           unique[v] = 1;
         } else {
           unique[v]++;
         }
       }
       return unique;
-    };
+    }
 
-    data_column.all = function (eval_fn) {
-      for (let i = 0; i < data_column.values.length; i++) {
-        if (!eval_fn(data_column.values[i])) {
+    data_column.all = function(eval_fn){
+      for(var i=0; i<data_column.values.length; i++){
+        if(!eval_fn(data_column.values[i])){
           return false;
         }
       }
       return true;
-    };
+    }
 
-    data_column.subset = function (eval_fn) {
-      const out = [];
-      for (let i = 0; i < data_column.values.length; i++) {
-        if (eval_fn(data_column.values[i])) {
+    data_column.subset = function(eval_fn){
+      var out = [];
+      for(var i=0; i<data_column.values.length; i++){
+        if(eval_fn(data_column.values[i])){
           out.push(data_column.values[i]);
         }
       }
-      const o = DataColumn();
+      var o = DataColumn();
       o.values = out;
       return o;
-    };
+    }
 
     return data_column;
   }
 
-  module.reset = function () {
+  module.reset = function(){
     allData = DataCollection();
     interactionData = DataCollection();
-  };
+  }
 
-  module.get = function () {
+  module.get = function() {
     return allData;
   };
 
-  module.getInteractionData = function () {
+  module.getInteractionData = function() {
     return interactionData;
-  };
+  }
 
-  module.write = function (data_object) {
-    const progress = jsPsych.progress();
-    const trial = jsPsych.currentTrial();
+  module.write = function(data_object) {
 
-    // var trial_opt_data = typeof trial.data == 'function' ? trial.data() : trial.data;
+    var progress = jsPsych.progress();
+    var trial = jsPsych.currentTrial();
 
-    const default_data = {
-      trial_type: trial.type,
-      trial_index: progress.current_trial_global,
-      time_elapsed: jsPsych.totalTime(),
-      internal_node_id: jsPsych.currentTimelineNodeID(),
+    //var trial_opt_data = typeof trial.data == 'function' ? trial.data() : trial.data;
+
+    var default_data = {
+      'trial_type': trial.type,
+      'trial_index': progress.current_trial_global,
+      'time_elapsed': jsPsych.totalTime(),
+      'internal_node_id': jsPsych.currentTimelineNodeID()
     };
 
-    const ext_data_object = {
-      ...data_object, ...trial.data, ...default_data, ...dataProperties,
-    };
+    var ext_data_object = Object.assign({}, data_object, trial.data, default_data, dataProperties);
 
     allData.push(ext_data_object);
   };
 
-  module.addProperties = function (properties) {
+  module.addProperties = function(properties) {
+
     // first, add the properties to all data that's already stored
     allData.addToAll(properties);
 
     // now add to list so that it gets appended to all future data
-    dataProperties = { ...dataProperties, ...properties };
+    dataProperties = Object.assign({}, dataProperties, properties);
+
   };
 
-  module.addDataToLastTrial = function (data) {
+  module.addDataToLastTrial = function(data) {
     allData.addToLast(data);
-  };
+  }
 
-  module.getDataByTimelineNode = function (node_id) {
-    const data = allData.filterCustom((x) => x.internal_node_id.slice(0, node_id.length) === node_id);
+  module.getDataByTimelineNode = function(node_id) {
+    var data = allData.filterCustom(function(x){
+      return x.internal_node_id.slice(0, node_id.length) === node_id;
+    });
 
     return data;
   };
 
-  module.getLastTrialData = function () {
+  module.getLastTrialData = function() {
     return allData.top();
   };
 
-  module.getLastTimelineData = function () {
-    const lasttrial = module.getLastTrialData();
-    const node_id = lasttrial.select('internal_node_id').values[0];
+  module.getLastTimelineData = function() {
+    var lasttrial = module.getLastTrialData();
+    var node_id = lasttrial.select('internal_node_id').values[0];
     if (typeof node_id === 'undefined') {
       return DataCollection();
+    } else {
+      var parent_node_id = node_id.substr(0,node_id.lastIndexOf('-'));
+      var lastnodedata = module.getDataByTimelineNode(parent_node_id);
+      return lastnodedata;
     }
-    const parent_node_id = node_id.substr(0, node_id.lastIndexOf('-'));
-    const lastnodedata = module.getDataByTimelineNode(parent_node_id);
-    return lastnodedata;
-  };
+  }
 
-  module.displayData = function (format) {
-    format = (typeof format === 'undefined') ? 'json' : format.toLowerCase();
-    if (format != 'json' && format != 'csv') {
+  module.displayData = function(format) {
+    format = (typeof format === 'undefined') ? "json" : format.toLowerCase();
+    if (format != "json" && format != "csv") {
       console.log('Invalid format declared for displayData function. Using json as default.');
-      format = 'json';
+      format = "json";
     }
 
-    let data_string;
+    var data_string;
 
     if (format == 'json') {
       data_string = allData.json(true); // true = pretty print with tabs
@@ -1344,57 +1390,57 @@ jsPsych.data = (function () {
       data_string = allData.csv();
     }
 
-    const display_element = jsPsych.getDisplayElement();
+    var display_element = jsPsych.getDisplayElement();
 
     display_element.innerHTML = '<pre id="jspsych-data-display"></pre>';
 
     document.getElementById('jspsych-data-display').textContent = data_string;
   };
 
-  module.urlVariables = function () {
-    if (typeof query_string === 'undefined') {
+  module.urlVariables = function() {
+    if(typeof query_string == 'undefined'){
       query_string = getQueryString();
     }
     return query_string;
-  };
+  }
 
-  module.getURLVariable = function (whichvar) {
-    if (typeof query_string === 'undefined') {
+  module.getURLVariable = function(whichvar){
+    if(typeof query_string == 'undefined'){
       query_string = getQueryString();
     }
     return query_string[whichvar];
-  };
+  }
 
-  module.createInteractionListeners = function () {
+  module.createInteractionListeners = function(){
     // blur event capture
-    window.addEventListener('blur', () => {
-      const data = {
+    window.addEventListener('blur', function(){
+      var data = {
         event: 'blur',
         trial: jsPsych.progress().current_trial_global,
-        time: jsPsych.totalTime(),
+        time: jsPsych.totalTime()
       };
       interactionData.push(data);
       jsPsych.initSettings().on_interaction_data_update(data);
     });
 
     // focus event capture
-    window.addEventListener('focus', () => {
-      const data = {
+    window.addEventListener('focus', function(){
+      var data = {
         event: 'focus',
         trial: jsPsych.progress().current_trial_global,
-        time: jsPsych.totalTime(),
+        time: jsPsych.totalTime()
       };
       interactionData.push(data);
       jsPsych.initSettings().on_interaction_data_update(data);
     });
 
     // fullscreen change capture
-    function fullscreenchange() {
-      const type = (document.isFullScreen || document.webkitIsFullScreen || document.mozIsFullScreen) ? 'fullscreenenter' : 'fullscreenexit';
-      const data = {
+    function fullscreenchange(){
+      var type = (document.isFullScreen || document.webkitIsFullScreen || document.mozIsFullScreen) ? 'fullscreenenter' : 'fullscreenexit';
+      var data = {
         event: type,
         trial: jsPsych.progress().current_trial_global,
-        time: jsPsych.totalTime(),
+        time: jsPsych.totalTime()
       };
       interactionData.push(data);
       jsPsych.initSettings().on_interaction_data_update(data);
@@ -1403,33 +1449,33 @@ jsPsych.data = (function () {
     document.addEventListener('fullscreenchange', fullscreenchange);
     document.addEventListener('mozfullscreenchange', fullscreenchange);
     document.addEventListener('webkitfullscreenchange', fullscreenchange);
-  };
+  }
 
   // public methods for testing purposes. not recommended for use.
-  module._customInsert = function (data) {
+  module._customInsert = function(data){
     allData = DataCollection(data);
-  };
+  }
 
-  module._fullreset = function () {
+  module._fullreset = function(){
     module.reset();
     dataProperties = {};
-  };
+  }
 
   // private function to save text file on local drive
   function saveTextToFile(textstr, filename) {
-    const blobToSave = new Blob([textstr], {
-      type: 'text/plain',
+    var blobToSave = new Blob([textstr], {
+      type: 'text/plain'
     });
-    let blobURL = '';
+    var blobURL = "";
     if (typeof window.webkitURL !== 'undefined') {
       blobURL = window.webkitURL.createObjectURL(blobToSave);
     } else {
       blobURL = window.URL.createObjectURL(blobToSave);
     }
 
-    const display_element = jsPsych.getDisplayElement();
+    var display_element = jsPsych.getDisplayElement();
 
-    display_element.insertAdjacentHTML('beforeend', `<a id="jspsych-download-as-text-link" style="display:none;" download="${filename}" href="${blobURL}">click to download</a>`);
+    display_element.insertAdjacentHTML('beforeend','<a id="jspsych-download-as-text-link" style="display:none;" download="'+filename+'" href="'+blobURL+'">click to download</a>');
     document.getElementById('jspsych-download-as-text-link').click();
   }
 
@@ -1442,16 +1488,16 @@ jsPsych.data = (function () {
   // http://stackoverflow.com/users/317/joseph-sturtevant
 
   function JSON2CSV(objArray) {
-    const array = typeof objArray !== 'object' ? JSON.parse(objArray) : objArray;
+    var array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
     var line = '';
-    let result = '';
-    const columns = [];
+    var result = '';
+    var columns = [];
 
     var i = 0;
     for (var j = 0; j < array.length; j++) {
-      for (const key in array[j]) {
-        let keyString = `${key}`;
-        keyString = `"${keyString.replace(/"/g, '""')}",`;
+      for (var key in array[j]) {
+        var keyString = key + "";
+        keyString = '"' + keyString.replace(/"/g, '""') + '",';
         if (!columns.includes(key)) {
           columns[i] = key;
           line += keyString;
@@ -1461,18 +1507,18 @@ jsPsych.data = (function () {
     }
 
     line = line.slice(0, -1);
-    result += `${line}\r\n`;
+    result += line + '\r\n';
 
     for (var i = 0; i < array.length; i++) {
       var line = '';
       for (var j = 0; j < columns.length; j++) {
-        const value = (typeof array[i][columns[j]] === 'undefined') ? '' : array[i][columns[j]];
-        const valueString = `${value}`;
-        line += `"${valueString.replace(/"/g, '""')}",`;
+        var value = (typeof array[i][columns[j]] === 'undefined') ? '' : array[i][columns[j]];
+        var valueString = value + "";
+        line += '"' + valueString.replace(/"/g, '""') + '",';
       }
 
       line = line.slice(0, -1);
-      result += `${line}\r\n`;
+      result += line + '\r\n';
     }
 
     return result;
@@ -1482,87 +1528,99 @@ jsPsych.data = (function () {
   // http://stackoverflow.com/posts/3855394
 
   function getQueryString() {
-    const a = window.location.search.substr(1).split('&');
-    if (a == '') return {};
-    const b = {};
-    for (let i = 0; i < a.length; ++i) {
-      const p = a[i].split('=', 2);
-      if (p.length == 1) { b[p[0]] = ''; } else { b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, ' ')); }
+    var a = window.location.search.substr(1).split('&');
+    if (a == "") return {};
+    var b = {};
+    for (var i = 0; i < a.length; ++i)
+    {
+        var p=a[i].split('=', 2);
+        if (p.length == 1)
+            b[p[0]] = "";
+        else
+            b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
     }
     return b;
   }
 
   return module;
-}());
 
-jsPsych.turk = (function () {
-  const module = {};
+})();
+
+jsPsych.turk = (function() {
+
+  var module = {};
 
   // core.turkInfo gets information relevant to mechanical turk experiments. returns an object
   // containing the workerID, assignmentID, and hitID, and whether or not the HIT is in
   // preview mode, meaning that they haven't accepted the HIT yet.
-  module.turkInfo = function () {
-    const turk = {};
+  module.turkInfo = function() {
 
-    const param = function (url, name) {
-      name = name.replace(/[\[]/, '\\\[').replace(/[\]]/, '\\\]');
-      const regexS = `[\\?&]${name}=([^&#]*)`;
-      const regex = new RegExp(regexS);
-      const results = regex.exec(url);
-      return (results == null) ? '' : results[1];
+    var turk = {};
+
+    var param = function(url, name) {
+      name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+      var regexS = "[\\?&]" + name + "=([^&#]*)";
+      var regex = new RegExp(regexS);
+      var results = regex.exec(url);
+      return (results == null) ? "" : results[1];
     };
 
-    const src = param(window.location.href, 'assignmentId') ? window.location.href : document.referrer;
+    var src = param(window.location.href, "assignmentId") ? window.location.href : document.referrer;
 
-    const keys = ['assignmentId', 'hitId', 'workerId', 'turkSubmitTo'];
+    var keys = ["assignmentId", "hitId", "workerId", "turkSubmitTo"];
     keys.map(
 
-      (key) => {
+      function(key) {
         turk[key] = unescape(param(src, key));
-      },
-    );
+      });
 
-    turk.previewMode = (turk.assignmentId == 'ASSIGNMENT_ID_NOT_AVAILABLE');
+    turk.previewMode = (turk.assignmentId == "ASSIGNMENT_ID_NOT_AVAILABLE");
 
-    turk.outsideTurk = (!turk.previewMode && turk.hitId === '' && turk.assignmentId == '' && turk.workerId == '');
+    turk.outsideTurk = (!turk.previewMode && turk.hitId === "" && turk.assignmentId == "" && turk.workerId == "")
 
     turk_info = turk;
 
     return turk;
+
   };
 
   // core.submitToTurk will submit a MechanicalTurk ExternalHIT type
-  module.submitToTurk = function (data) {
-    const turkInfo = jsPsych.turk.turkInfo();
-    const { assignmentId } = turkInfo;
-    const { turkSubmitTo } = turkInfo;
+  module.submitToTurk = function(data) {
+
+    var turkInfo = jsPsych.turk.turkInfo();
+    var assignmentId = turkInfo.assignmentId;
+    var turkSubmitTo = turkInfo.turkSubmitTo;
 
     if (!assignmentId || !turkSubmitTo) return;
 
-    const dataString = [];
+    var dataString = [];
 
-    for (const key in data) {
+    for (var key in data) {
+
       if (data.hasOwnProperty(key)) {
-        dataString.push(`${key}=${escape(data[key])}`);
+        dataString.push(key + "=" + escape(data[key]));
       }
     }
 
-    dataString.push(`assignmentId=${assignmentId}`);
+    dataString.push("assignmentId=" + assignmentId);
 
-    const url = `${turkSubmitTo}/mturk/externalSubmit?${dataString.join('&')}`;
+    var url = turkSubmitTo + "/mturk/externalSubmit?" + dataString.join("&");
 
     window.location.href = url;
   };
 
   return module;
-}());
 
-jsPsych.randomization = (function () {
-  const module = {};
+})();
 
-  module.repeat = function (array, repetitions, unpack) {
-    const arr_isArray = Array.isArray(array);
-    const rep_isArray = Array.isArray(repetitions);
+jsPsych.randomization = (function() {
+
+  var module = {};
+
+  module.repeat = function(array, repetitions, unpack) {
+
+    var arr_isArray = Array.isArray(array);
+    var rep_isArray = Array.isArray(repetitions);
 
     // if array is not an array, then we just repeat the item
     if (!arr_isArray) {
@@ -1573,131 +1631,138 @@ jsPsych.randomization = (function () {
         repetitions = [repetitions[0]];
         console.log('Unclear parameters given to randomization.repeat. Multiple set sizes specified, but only one item exists to sample. Proceeding using the first set size.');
       }
-    } else if (!rep_isArray) {
-      var reps = [];
-      for (var i = 0; i < array.length; i++) {
-        reps.push(repetitions);
-      }
-      repetitions = reps;
-    } else if (array.length != repetitions.length) {
-      console.warning('Unclear parameters given to randomization.repeat. Items and repetitions are unequal lengths. Behavior may not be as expected.');
-      // throw warning if repetitions is too short, use first rep ONLY.
-      if (repetitions.length < array.length) {
+    } else {
+      if (!rep_isArray) {
         var reps = [];
         for (var i = 0; i < array.length; i++) {
           reps.push(repetitions);
         }
         repetitions = reps;
       } else {
-        // throw warning if too long, and then use the first N
-        repetitions = repetions.slice(0, array.length);
-      }
-    }
-
-    // should be clear at this point to assume that array and repetitions are arrays with == length
-    const allsamples = [];
-    for (var i = 0; i < array.length; i++) {
-      for (let j = 0; j < repetitions[i]; j++) {
-        if (array[i] == null || typeof array[i] !== 'object') {
-          allsamples.push(array[i]);
-        } else {
-          allsamples.push({ ...array[i] });
+        if (array.length != repetitions.length) {
+          console.warning('Unclear parameters given to randomization.repeat. Items and repetitions are unequal lengths. Behavior may not be as expected.');
+          // throw warning if repetitions is too short, use first rep ONLY.
+          if (repetitions.length < array.length) {
+            var reps = [];
+            for (var i = 0; i < array.length; i++) {
+              reps.push(repetitions);
+            }
+            repetitions = reps;
+          } else {
+            // throw warning if too long, and then use the first N
+            repetitions = repetions.slice(0, array.length);
+          }
         }
       }
     }
 
-    let out = shuffle(allsamples);
+    // should be clear at this point to assume that array and repetitions are arrays with == length
+    var allsamples = [];
+    for (var i = 0; i < array.length; i++) {
+      for (var j = 0; j < repetitions[i]; j++) {
+        if(array[i] == null || typeof array[i] != 'object'){
+          allsamples.push(array[i]);
+        } else {
+          allsamples.push(Object.assign({}, array[i]));
+        }
+
+      }
+    }
+
+    var out = shuffle(allsamples);
 
     if (unpack) {
       out = unpackArray(out);
     }
 
     return out;
-  };
+  }
 
-  module.shuffle = function (arr) {
+  module.shuffle = function(arr) {
     return shuffle(arr);
-  };
+  }
 
-  module.shuffleNoRepeats = function (arr, equalityTest) {
+  module.shuffleNoRepeats = function(arr, equalityTest) {
     // define a default equalityTest
-    if (typeof equalityTest === 'undefined') {
-      equalityTest = function (a, b) {
+    if (typeof equalityTest == 'undefined') {
+      equalityTest = function(a, b) {
         if (a === b) {
           return true;
+        } else {
+          return false;
         }
-        return false;
-      };
+      }
     }
 
-    const random_shuffle = shuffle(arr);
-    for (let i = 0; i < random_shuffle.length - 2; i++) {
+    var random_shuffle = shuffle(arr);
+    for (var i = 0; i < random_shuffle.length - 2; i++) {
       if (equalityTest(random_shuffle[i], random_shuffle[i + 1])) {
         // neighbors are equal, pick a new random neighbor to swap (not the first or last element, to avoid edge cases)
-        let random_pick = Math.floor(Math.random() * (random_shuffle.length - 2)) + 1;
+        var random_pick = Math.floor(Math.random() * (random_shuffle.length - 2)) + 1;
         // test to make sure the new neighbor isn't equal to the old one
         while (
-          equalityTest(random_shuffle[i + 1], random_shuffle[random_pick])
-          || (equalityTest(random_shuffle[i + 1], random_shuffle[random_pick + 1]) || equalityTest(random_shuffle[i + 1], random_shuffle[random_pick - 1]))
+          equalityTest(random_shuffle[i + 1], random_shuffle[random_pick]) ||
+          (equalityTest(random_shuffle[i + 1], random_shuffle[random_pick + 1]) || equalityTest(random_shuffle[i + 1], random_shuffle[random_pick - 1]))
         ) {
           random_pick = Math.floor(Math.random() * (random_shuffle.length - 2)) + 1;
         }
-        const new_neighbor = random_shuffle[random_pick];
+        var new_neighbor = random_shuffle[random_pick];
         random_shuffle[random_pick] = random_shuffle[i + 1];
         random_shuffle[i + 1] = new_neighbor;
       }
     }
 
     return random_shuffle;
-  };
+  }
 
-  module.sampleWithoutReplacement = function (arr, size) {
+  module.sampleWithoutReplacement = function(arr, size){
     if (size > arr.length) {
-      console.error('Cannot take a sample '
-        + 'larger than the size of the set of items to sample.');
+      console.error("Cannot take a sample " +
+        "larger than the size of the set of items to sample.");
     }
-    return jsPsych.randomization.shuffle(arr).slice(0, size);
-  };
+    return jsPsych.randomization.shuffle(arr).slice(0,size);
+  }
 
-  module.sampleWithReplacement = function (arr, size, weights) {
-    const normalized_weights = [];
-    if (typeof weights !== 'undefined') {
-      if (weights.length !== arr.length) {
-        console.error('The length of the weights array must equal the length of the array '
-        + 'to be sampled from.');
+  module.sampleWithReplacement = function(arr, size, weights) {
+    var normalized_weights = [];
+    if(typeof weights !== 'undefined'){
+      if(weights.length !== arr.length){
+        console.error('The length of the weights array must equal the length of the array '+
+        'to be sampled from.');
       }
-      let weight_sum = 0;
-      for (var i = 0; i < weights.length; i++) {
+      var weight_sum = 0;
+      for(var i=0; i<weights.length; i++){
         weight_sum += weights[i];
       }
-      for (var i = 0; i < weights.length; i++) {
-        normalized_weights.push(weights[i] / weight_sum);
+      for(var i=0; i<weights.length; i++){
+        normalized_weights.push( weights[i] / weight_sum );
       }
     } else {
-      for (var i = 0; i < arr.length; i++) {
-        normalized_weights.push(1 / arr.length);
+      for(var i=0; i<arr.length; i++){
+        normalized_weights.push( 1 / arr.length );
       }
     }
 
-    const cumulative_weights = [normalized_weights[0]];
-    for (var i = 1; i < normalized_weights.length; i++) {
-      cumulative_weights.push(normalized_weights[i] + cumulative_weights[i - 1]);
+    var cumulative_weights = [normalized_weights[0]];
+    for(var i=1; i<normalized_weights.length; i++){
+      cumulative_weights.push(normalized_weights[i] + cumulative_weights[i-1]);
     }
 
-    const samp = [];
+    var samp = [];
     for (var i = 0; i < size; i++) {
-      const rnd = Math.random();
-      let index = 0;
-      while (rnd > cumulative_weights[index]) { index++; }
+      var rnd = Math.random();
+      var index = 0;
+      while(rnd > cumulative_weights[index]) { index++; }
       samp.push(arr[index]);
     }
     return samp;
-  };
+  }
 
-  module.factorial = function (factors, repetitions, unpack) {
-    const factorNames = Object.keys(factors);
+  module.factorial = function(factors, repetitions, unpack) {
 
-    const factor_combinations = [];
+    var factorNames = Object.keys(factors);
+
+    var factor_combinations = [];
 
     for (var i = 0; i < factors[factorNames[0]].length; i++) {
       factor_combinations.push({});
@@ -1705,41 +1770,42 @@ jsPsych.randomization = (function () {
     }
 
     for (var i = 1; i < factorNames.length; i++) {
-      const toAdd = factors[factorNames[i]];
-      const n = factor_combinations.length;
-      for (let j = 0; j < n; j++) {
-        const base = factor_combinations[j];
-        for (let k = 0; k < toAdd.length; k++) {
-          const newpiece = {};
+      var toAdd = factors[factorNames[i]];
+      var n = factor_combinations.length;
+      for (var j = 0; j < n; j++) {
+        var base = factor_combinations[j];
+        for (var k = 0; k < toAdd.length; k++) {
+          var newpiece = {};
           newpiece[factorNames[i]] = toAdd[k];
-          factor_combinations.push({ ...base, ...newpiece });
+          factor_combinations.push(Object.assign({}, base, newpiece));
         }
       }
       factor_combinations.splice(0, n);
     }
 
     repetitions = (typeof repetitions === 'undefined') ? 1 : repetitions;
-    const with_repetitions = module.repeat(factor_combinations, repetitions, unpack);
+    var with_repetitions = module.repeat(factor_combinations, repetitions, unpack);
 
     return with_repetitions;
-  };
+  }
 
-  module.randomID = function (length) {
-    let result = '';
-    var length = (typeof length === 'undefined') ? 32 : length;
-    const chars = '0123456789abcdefghjklmnopqrstuvwxyz';
-    for (let i = 0; i < length; i++) {
+  module.randomID = function(length){
+    var result = '';
+    var length = (typeof length == 'undefined') ? 32 : length;
+    var chars = '0123456789abcdefghjklmnopqrstuvwxyz';
+    for(var i = 0; i<length; i++){
       result += chars[Math.floor(Math.random() * chars.length)];
     }
     return result;
-  };
+  }
 
   function unpackArray(array) {
-    const out = {};
 
-    for (let i = 0; i < array.length; i++) {
-      const keys = Object.keys(array[i]);
-      for (let k = 0; k < keys.length; k++) {
+    var out = {};
+
+    for (var i = 0; i < array.length; i++) {
+      var keys = Object.keys(array[i]);
+      for (var k = 0; k < keys.length; k++) {
         if (typeof out[keys[k]] === 'undefined') {
           out[keys[k]] = [];
         }
@@ -1751,13 +1817,13 @@ jsPsych.randomization = (function () {
   }
 
   function shuffle(array) {
-    const copy_array = array.slice(0);
-    let m = copy_array.length;
-    let t; let
-      i;
+    var copy_array = array.slice(0);
+    var m = copy_array.length,
+      t, i;
 
     // While there remain elements to shuffle…
     while (m) {
+
       // Pick a remaining element…
       i = Math.floor(Math.random() * m--);
 
@@ -1771,41 +1837,43 @@ jsPsych.randomization = (function () {
   }
 
   return module;
-}());
 
-jsPsych.pluginAPI = (function () {
-  const module = {};
+})();
+
+jsPsych.pluginAPI = (function() {
+
+  var module = {};
 
   // keyboard listeners //
 
-  let keyboard_listeners = [];
+  var keyboard_listeners = [];
 
-  let held_keys = {};
+  var held_keys = {};
 
-  const root_keydown_listener = function (e) {
-    for (let i = 0; i < keyboard_listeners.length; i++) {
+  var root_keydown_listener = function(e){
+    for(var i=0; i<keyboard_listeners.length; i++){
       keyboard_listeners[i].fn(e);
     }
     held_keys[e.keyCode] = true;
-  };
-  const root_keyup_listener = function (e) {
+  }
+  var root_keyup_listener = function(e){
     held_keys[e.keyCode] = false;
-  };
+  }
 
-  module.reset = function (root_element) {
+  module.reset = function(root_element){
     keyboard_listeners = [];
     held_keys = {};
     root_element.removeEventListener('keydown', root_keydown_listener);
     root_element.removeEventListener('keyup', root_keyup_listener);
-  };
+  }
 
-  module.createKeyboardEventListeners = function (root_element) {
+  module.createKeyboardEventListeners = function(root_element){
     root_element.addEventListener('keydown', root_keydown_listener);
     root_element.addEventListener('keyup', root_keyup_listener);
-  };
+  }
 
-  module.getKeyboardResponse = function (parameters) {
-    // parameters are: callback_function, valid_responses, rt_method, persist, audio_context, audio_context_start_time, allow_held_key?
+  module.getKeyboardResponse = function(parameters) {
+    //parameters are: callback_function, valid_responses, rt_method, persist, audio_context, audio_context_start_time, allow_held_key?
 
     parameters.rt_method = (typeof parameters.rt_method === 'undefined') ? 'date' : parameters.rt_method;
     if (parameters.rt_method != 'date' && parameters.rt_method != 'performance' && parameters.rt_method != 'audio') {
@@ -1813,7 +1881,7 @@ jsPsych.pluginAPI = (function () {
       parameters.rt_method = 'date';
     }
 
-    let start_time;
+    var start_time;
     if (parameters.rt_method == 'date') {
       start_time = (new Date()).getTime();
     } else if (parameters.rt_method == 'performance') {
@@ -1822,52 +1890,57 @@ jsPsych.pluginAPI = (function () {
       start_time = parameters.audio_context_start_time;
     }
 
-    let listener_id;
+    var listener_id;
 
-    const listener_function = function (e) {
-      let key_time;
+    var listener_function = function(e) {
+
+      var key_time;
       if (parameters.rt_method == 'date') {
         key_time = (new Date()).getTime();
       } else if (parameters.rt_method == 'performance') {
         key_time = performance.now();
       } else if (parameters.rt_method == 'audio') {
-        key_time = parameters.audio_context.currentTime;
+        key_time = parameters.audio_context.currentTime
       }
 
-      let valid_response = false;
+      var valid_response = false;
       if (typeof parameters.valid_responses === 'undefined' || parameters.valid_responses == jsPsych.ALL_KEYS) {
         valid_response = true;
-      } else if (parameters.valid_responses != jsPsych.NO_KEYS) {
-        for (let i = 0; i < parameters.valid_responses.length; i++) {
-          if (typeof parameters.valid_responses[i] === 'string') {
-            const kc = jsPsych.pluginAPI.convertKeyCharacterToKeyCode(parameters.valid_responses[i]);
-            if (typeof kc !== 'undefined') {
-              if (e.keyCode == kc) {
-                valid_response = true;
+      } else {
+        if(parameters.valid_responses != jsPsych.NO_KEYS){
+          for (var i = 0; i < parameters.valid_responses.length; i++) {
+            if (typeof parameters.valid_responses[i] == 'string') {
+              var kc = jsPsych.pluginAPI.convertKeyCharacterToKeyCode(parameters.valid_responses[i]);
+              if (typeof kc !== 'undefined') {
+                if (e.keyCode == kc) {
+                  valid_response = true;
+                }
+              } else {
+                throw new Error('Invalid key string specified for getKeyboardResponse');
               }
-            } else {
-              throw new Error('Invalid key string specified for getKeyboardResponse');
+            } else if (e.keyCode == parameters.valid_responses[i]) {
+              valid_response = true;
             }
-          } else if (e.keyCode == parameters.valid_responses[i]) {
-            valid_response = true;
           }
         }
       }
       // check if key was already held down
 
-      if (((typeof parameters.allow_held_key === 'undefined') || !parameters.allow_held_key) && valid_response) {
+      if (((typeof parameters.allow_held_key == 'undefined') || !parameters.allow_held_key) && valid_response) {
         if (typeof held_keys[e.keyCode] !== 'undefined' && held_keys[e.keyCode] == true) {
           valid_response = false;
         }
       }
 
       if (valid_response) {
+
         parameters.callback_function({
           key: e.keyCode,
-          rt: key_time - start_time,
+          rt: key_time - start_time
         });
 
         if (keyboard_listeners.includes(listener_id)) {
+
           if (!parameters.persist) {
             // remove keyboard listener
             module.cancelKeyboardResponse(listener_id);
@@ -1879,114 +1952,115 @@ jsPsych.pluginAPI = (function () {
     // create listener id object
     listener_id = {
       type: 'keydown',
-      fn: listener_function,
+      fn: listener_function
     };
 
     // add this keyboard listener to the list of listeners
     keyboard_listeners.push(listener_id);
 
     return listener_id;
+
   };
 
-  module.cancelKeyboardResponse = function (listener) {
+  module.cancelKeyboardResponse = function(listener) {
     // remove the listener from the list of listeners
     if (keyboard_listeners.includes(listener)) {
       keyboard_listeners.splice(keyboard_listeners.indexOf(listener), 1);
     }
   };
 
-  module.cancelAllKeyboardResponses = function () {
+  module.cancelAllKeyboardResponses = function() {
     keyboard_listeners = [];
   };
 
-  module.convertKeyCharacterToKeyCode = function (character) {
-    let code;
+  module.convertKeyCharacterToKeyCode = function(character) {
+    var code;
     character = character.toLowerCase();
     if (typeof keylookup[character] !== 'undefined') {
       code = keylookup[character];
     }
     return code;
-  };
+  }
 
-  module.convertKeyCodeToKeyCharacter = function (code) {
-    for (const i in Object.keys(keylookup)) {
-      if (keylookup[Object.keys(keylookup)[i]] == code) {
+  module.convertKeyCodeToKeyCharacter = function(code){
+    for(var i in Object.keys(keylookup)){
+      if(keylookup[Object.keys(keylookup)[i]] == code){
         return Object.keys(keylookup)[i];
       }
     }
     return undefined;
-  };
+  }
 
-  module.compareKeys = function (key1, key2) {
+  module.compareKeys = function(key1, key2){
     // convert to numeric values no matter what
-    if (typeof key1 === 'string') {
+    if(typeof key1 == 'string') {
       key1 = module.convertKeyCharacterToKeyCode(key1);
     }
-    if (typeof key2 === 'string') {
+    if(typeof key2 == 'string') {
       key2 = module.convertKeyCharacterToKeyCode(key2);
     }
     return key1 == key2;
-  };
+  }
 
   var keylookup = {
-    backspace: 8,
-    tab: 9,
-    enter: 13,
-    shift: 16,
-    ctrl: 17,
-    alt: 18,
-    pause: 19,
-    capslock: 20,
-    esc: 27,
-    space: 32,
-    spacebar: 32,
+    'backspace': 8,
+    'tab': 9,
+    'enter': 13,
+    'shift': 16,
+    'ctrl': 17,
+    'alt': 18,
+    'pause': 19,
+    'capslock': 20,
+    'esc': 27,
+    'space': 32,
+    'spacebar': 32,
     ' ': 32,
-    pageup: 33,
-    pagedown: 34,
-    end: 35,
-    home: 36,
-    leftarrow: 37,
-    uparrow: 38,
-    rightarrow: 39,
-    downarrow: 40,
-    insert: 45,
-    delete: 46,
-    0: 48,
-    1: 49,
-    2: 50,
-    3: 51,
-    4: 52,
-    5: 53,
-    6: 54,
-    7: 55,
-    8: 56,
-    9: 57,
-    a: 65,
-    b: 66,
-    c: 67,
-    d: 68,
-    e: 69,
-    f: 70,
-    g: 71,
-    h: 72,
-    i: 73,
-    j: 74,
-    k: 75,
-    l: 76,
-    m: 77,
-    n: 78,
-    o: 79,
-    p: 80,
-    q: 81,
-    r: 82,
-    s: 83,
-    t: 84,
-    u: 85,
-    v: 86,
-    w: 87,
-    x: 88,
-    y: 89,
-    z: 90,
+    'pageup': 33,
+    'pagedown': 34,
+    'end': 35,
+    'home': 36,
+    'leftarrow': 37,
+    'uparrow': 38,
+    'rightarrow': 39,
+    'downarrow': 40,
+    'insert': 45,
+    'delete': 46,
+    '0': 48,
+    '1': 49,
+    '2': 50,
+    '3': 51,
+    '4': 52,
+    '5': 53,
+    '6': 54,
+    '7': 55,
+    '8': 56,
+    '9': 57,
+    'a': 65,
+    'b': 66,
+    'c': 67,
+    'd': 68,
+    'e': 69,
+    'f': 70,
+    'g': 71,
+    'h': 72,
+    'i': 73,
+    'j': 74,
+    'k': 75,
+    'l': 76,
+    'm': 77,
+    'n': 78,
+    'o': 79,
+    'p': 80,
+    'q': 81,
+    'r': 82,
+    's': 83,
+    't': 84,
+    'u': 85,
+    'v': 86,
+    'w': 87,
+    'x': 88,
+    'y': 89,
+    'z': 90,
     '0numpad': 96,
     '1numpad': 97,
     '2numpad': 98,
@@ -1997,23 +2071,23 @@ jsPsych.pluginAPI = (function () {
     '7numpad': 103,
     '8numpad': 104,
     '9numpad': 105,
-    multiply: 106,
-    plus: 107,
-    minus: 109,
-    decimal: 110,
-    divide: 111,
-    f1: 112,
-    f2: 113,
-    f3: 114,
-    f4: 115,
-    f5: 116,
-    f6: 117,
-    f7: 118,
-    f8: 119,
-    f9: 120,
-    f10: 121,
-    f11: 122,
-    f12: 123,
+    'multiply': 106,
+    'plus': 107,
+    'minus': 109,
+    'decimal': 110,
+    'divide': 111,
+    'f1': 112,
+    'f2': 113,
+    'f3': 114,
+    'f4': 115,
+    'f5': 116,
+    'f6': 117,
+    'f7': 118,
+    'f8': 119,
+    'f9': 120,
+    'f10': 121,
+    'f11': 122,
+    'f12': 123,
     '=': 187,
     ',': 188,
     '.': 190,
@@ -2021,133 +2095,136 @@ jsPsych.pluginAPI = (function () {
     '`': 192,
     '[': 219,
     '\\': 220,
-    ']': 221,
+    ']': 221
   };
 
   // timeout registration
 
-  let timeout_handlers = [];
+  var timeout_handlers = [];
 
-  module.setTimeout = function (callback, delay) {
-    const handle = setTimeout(callback, delay);
+  module.setTimeout = function(callback, delay){
+    var handle = setTimeout(callback, delay);
     timeout_handlers.push(handle);
     return handle;
-  };
+  }
 
-  module.clearAllTimeouts = function () {
-    for (let i = 0; i < timeout_handlers.length; i++) {
+  module.clearAllTimeouts = function(){
+    for(var i=0;i<timeout_handlers.length; i++){
       clearTimeout(timeout_handlers[i]);
     }
     timeout_handlers = [];
-  };
+  }
 
   // audio //
-  let context = null;
-  const audio_buffers = [];
+  var context = null;
+  var audio_buffers = [];
 
-  module.initAudio = function () {
+  module.initAudio = function(){
     context = (jsPsych.initSettings().use_webaudio == true) ? jsPsych.webaudio_context : null;
-  };
+  }
 
-  module.audioContext = function () {
-    if (context !== null) {
-      if (context.state !== 'running') {
+  module.audioContext = function(){
+    if(context !== null){
+      if(context.state !== 'running'){
         context.resume();
       }
     }
     return context;
-  };
+  }
 
-  module.getAudioBuffer = function (audioID) {
+  module.getAudioBuffer = function(audioID) {
+
     if (audio_buffers[audioID] == 'tmp') {
-      console.error('Audio file failed to load in the time alloted.');
+      console.error('Audio file failed to load in the time alloted.')
       return;
     }
 
     return audio_buffers[audioID];
-  };
+
+  }
 
   // preloading stimuli //
 
-  const preloads = [];
+  var preloads = [];
 
-  const img_cache = {};
+  var img_cache = {};
 
-  module.preloadAudioFiles = function (files, callback_complete, callback_load) {
+  module.preloadAudioFiles = function(files, callback_complete, callback_load) {
+
     files = jsPsych.utils.flatten(files);
     files = jsPsych.utils.unique(files);
 
-    let n_loaded = 0;
-    const loadfn = (typeof callback_load === 'undefined') ? function () {} : callback_load;
-    const finishfn = (typeof callback_complete === 'undefined') ? function () {} : callback_complete;
+    var n_loaded = 0;
+    var loadfn = (typeof callback_load === 'undefined') ? function() {} : callback_load;
+    var finishfn = (typeof callback_complete === 'undefined') ? function() {} : callback_complete;
 
-    if (files.length == 0) {
+    if(files.length==0){
       finishfn();
       return;
     }
 
-    function load_audio_file_webaudio(source, count) {
+    function load_audio_file_webaudio(source, count){
       count = count || 1;
-      const request = new XMLHttpRequest();
+      var request = new XMLHttpRequest();
       request.open('GET', source, true);
       request.responseType = 'arraybuffer';
-      request.onload = function () {
-        context.decodeAudioData(request.response, (buffer) => {
+      request.onload = function() {
+        context.decodeAudioData(request.response, function(buffer) {
           audio_buffers[source] = buffer;
           n_loaded++;
           loadfn(n_loaded);
-          if (n_loaded == files.length) {
+          if(n_loaded == files.length) {
             finishfn();
           }
-        }, () => {
-          console.error(`Error loading audio file: ${bufferID}`);
+        }, function() {
+          console.error('Error loading audio file: ' + bufferID);
         });
-      };
-      request.onerror = function () {
-        if (count < jsPsych.initSettings().max_preload_attempts) {
-          setTimeout(() => {
-            load_audio_file_webaudio(source, count + 1);
+      }
+      request.onerror = function(){
+        if(count < jsPsych.initSettings().max_preload_attempts){
+          setTimeout(function(){
+            load_audio_file_webaudio(source, count+1)
           }, 200);
         } else {
           jsPsych.loadFail();
         }
-      };
+      }
       request.send();
     }
 
-    function load_audio_file_html5audio(source, count) {
+    function load_audio_file_html5audio(source, count){
       count = count || 1;
-      const audio = new Audio();
-      audio.addEventListener('canplaythrough', () => {
+      var audio = new Audio();
+      audio.addEventListener('canplaythrough', function(){
         audio_buffers[source] = audio;
         n_loaded++;
         loadfn(n_loaded);
-        if (n_loaded == files.length) {
+        if(n_loaded == files.length){
           finishfn();
         }
       });
-      audio.addEventListener('onerror', () => {
-        if (count < jsPsych.initSettings().max_preload_attempts) {
-          setTimeout(() => {
-            load_audio_file_html5audio(source, count + 1);
+      audio.addEventListener('onerror', function(){
+        if(count < jsPsych.initSettings().max_preload_attempts){
+          setTimeout(function(){
+            load_audio_file_html5audio(source, count+1)
           }, 200);
         } else {
           jsPsych.loadFail();
         }
       });
-      audio.addEventListener('onstalled', () => {
-        if (count < jsPsych.initSettings().max_preload_attempts) {
-          setTimeout(() => {
-            load_audio_file_html5audio(source, count + 1);
+      audio.addEventListener('onstalled', function(){
+        if(count < jsPsych.initSettings().max_preload_attempts){
+          setTimeout(function(){
+            load_audio_file_html5audio(source, count+1)
           }, 200);
         } else {
           jsPsych.loadFail();
         }
       });
-      audio.addEventListener('onabort', () => {
-        if (count < jsPsych.initSettings().max_preload_attempts) {
-          setTimeout(() => {
-            load_audio_file_html5audio(source, count + 1);
+      audio.addEventListener('onabort', function(){
+        if(count < jsPsych.initSettings().max_preload_attempts){
+          setTimeout(function(){
+            load_audio_file_html5audio(source, count+1)
           }, 200);
         } else {
           jsPsych.loadFail();
@@ -2156,45 +2233,47 @@ jsPsych.pluginAPI = (function () {
       audio.src = source;
     }
 
-    for (let i = 0; i < files.length; i++) {
+    for (var i = 0; i < files.length; i++) {
       var bufferID = files[i];
       if (typeof audio_buffers[bufferID] !== 'undefined') {
         n_loaded++;
         loadfn(n_loaded);
-        if (n_loaded == files.length) {
+        if(n_loaded == files.length) {
           finishfn();
         }
       } else {
         audio_buffers[bufferID] = 'tmp';
-        if (module.audioContext() !== null) {
+        if(module.audioContext() !== null){
           load_audio_file_webaudio(bufferID);
         } else {
           load_audio_file_html5audio(bufferID);
         }
       }
     }
-  };
 
-  module.preloadImages = function (images, callback_complete, callback_load) {
+  }
+
+  module.preloadImages = function(images, callback_complete, callback_load) {
+
     // flatten the images array
     images = jsPsych.utils.flatten(images);
     images = jsPsych.utils.unique(images);
 
-    let n_loaded = 0;
-    const loadfn = (typeof callback_load === 'undefined') ? function () {} : callback_load;
-    const finishfn = (typeof callback_complete === 'undefined') ? function () {} : callback_complete;
+    var n_loaded = 0;
+    var loadfn = (typeof callback_load === 'undefined') ? function() {} : callback_load;
+    var finishfn = (typeof callback_complete === 'undefined') ? function() {} : callback_complete;
 
-    if (images.length == 0) {
+    if(images.length==0){
       finishfn();
       return;
     }
 
-    function preload_image(source, count) {
+    function preload_image(source, count){
       count = count || 1;
 
-      const img = new Image();
+      var img = new Image();
 
-      img.onload = function () {
+      img.onload = function() {
         n_loaded++;
         loadfn(n_loaded);
         if (n_loaded == images.length) {
@@ -2202,56 +2281,57 @@ jsPsych.pluginAPI = (function () {
         }
       };
 
-      img.onerror = function () {
-        if (count < jsPsych.initSettings().max_preload_attempts) {
-          setTimeout(() => {
-            preload_image(source, count + 1);
+      img.onerror = function() {
+        if(count < jsPsych.initSettings().max_preload_attempts){
+          setTimeout(function(){
+            preload_image(source, count+1);
           }, 200);
         } else {
           jsPsych.loadFail();
         }
-      };
+      }
 
       img.src = source;
 
       img_cache[source] = img;
     }
 
-    for (let i = 0; i < images.length; i++) {
+    for (var i = 0; i < images.length; i++) {
       preload_image(images[i]);
     }
+
   };
 
-  module.registerPreload = function (plugin_name, parameter, media_type, conditional_function) {
+  module.registerPreload = function(plugin_name, parameter, media_type, conditional_function) {
     if (!(media_type == 'audio' || media_type == 'image')) {
       console.error('Invalid media_type parameter for jsPsych.pluginAPI.registerPreload. Please check the plugin file.');
     }
 
-    const preload = {
+    var preload = {
       plugin: plugin_name,
-      parameter,
-      media_type,
-      conditional_function,
-    };
+      parameter: parameter,
+      media_type: media_type,
+      conditional_function: conditional_function
+    }
 
     preloads.push(preload);
-  };
+  }
 
-  module.autoPreload = function (timeline, callback, images, audio, progress_bar) {
+  module.autoPreload = function(timeline, callback, images, audio, progress_bar) {
     // list of items to preload
     images = typeof images === 'undefined' ? [] : images;
     audio = typeof audio === 'undefined' ? [] : audio;
 
     // construct list
-    for (let i = 0; i < preloads.length; i++) {
-      const type = preloads[i].plugin;
-      const param = preloads[i].parameter;
-      const media = preloads[i].media_type;
-      const func = preloads[i].conditional_function;
-      const trials = timeline.trialsOfType(type);
-      for (let j = 0; j < trials.length; j++) {
+    for (var i = 0; i < preloads.length; i++) {
+      var type = preloads[i].plugin;
+      var param = preloads[i].parameter;
+      var media = preloads[i].media_type;
+      var func = preloads[i].conditional_function;
+      var trials = timeline.trialsOfType(type);
+      for (var j = 0; j < trials.length; j++) {
         if (typeof trials[j][param] !== 'undefined' && typeof trials[j][param] !== 'function') {
-          if (typeof func === 'undefined' || func(trials[j])) {
+          if ( typeof func == 'undefined' || func(trials[j]) ){
             if (media == 'image') {
               images = images.concat(jsPsych.utils.flatten([trials[j][param]]));
             } else if (media == 'audio') {
@@ -2263,35 +2343,35 @@ jsPsych.pluginAPI = (function () {
     }
 
     images = jsPsych.utils.unique(images);
-    audio = jsPsych.utils.unique(audio);
+    audio  = jsPsych.utils.unique(audio);
 
-    const total_n = images.length + audio.length;
-    let loaded = 0;
+    var total_n = images.length + audio.length;
+    var loaded = 0;
 
-    if (progress_bar) {
-      let pb_html = "<div id='jspsych-loading-progress-bar-container' style='height: 10px; width: 300px; background-color: #ddd;'>";
+    if(progress_bar){
+      var pb_html = "<div id='jspsych-loading-progress-bar-container' style='height: 10px; width: 300px; background-color: #ddd;'>";
       pb_html += "<div id='jspsych-loading-progress-bar' style='height: 10px; width: 0%; background-color: #777;'></div>";
-      pb_html += '</div>';
+      pb_html += "</div>";
       jsPsych.getDisplayElement().innerHTML = pb_html;
     }
 
-    function update_loading_progress_bar() {
+    function update_loading_progress_bar(){
       loaded++;
-      if (progress_bar) {
-        const percent_loaded = (loaded / total_n) * 100;
-        jsPsych.getDisplayElement().querySelector('#jspsych-loading-progress-bar').style.width = `${percent_loaded}%`;
+      if(progress_bar){
+        var percent_loaded = (loaded/total_n)*100;
+        jsPsych.getDisplayElement().querySelector('#jspsych-loading-progress-bar').style.width = percent_loaded+"%";
       }
     }
 
     // do the preloading
     // first the images, then when the images are complete
     // wait for the audio files to finish
-    module.preloadImages(images, () => {
-      module.preloadAudioFiles(audio, () => {
+    module.preloadImages(images, function() {
+      module.preloadAudioFiles(audio, function() {
         callback();
       }, update_loading_progress_bar);
     }, update_loading_progress_bar);
-  };
+  }
 
   /**
    * Allows communication with user hardware through our custom Google Chrome extension + native C++ program
@@ -2299,92 +2379,96 @@ jsPsych.pluginAPI = (function () {
    * @author	Daniel Rivas
    *
    */
-  module.hardware = function hardware(mess) {
-	  // since Chrome extension content-scripts do not share the javascript environment with the page script that loaded jspsych,
-	  // we will need to use hacky methods like communicating through DOM events.
-	  const jspsychEvt = new CustomEvent('jspsych', { detail: mess });
+  module.hardware = function hardware(mess){
+	  //since Chrome extension content-scripts do not share the javascript environment with the page script that loaded jspsych,
+	  //we will need to use hacky methods like communicating through DOM events.
+	  var jspsychEvt = new CustomEvent('jspsych', {detail: mess});
 	  document.dispatchEvent(jspsychEvt);
-	  // And voila! it will be the job of the content script injected by the extension to listen for the event and do the appropriate actions.
+	  //And voila! it will be the job of the content script injected by the extension to listen for the event and do the appropriate actions.
   };
 
   /** {boolean} Indicates whether this instance of jspsych has opened a hardware connection through our browser extension */
   module.hardwareConnected = false;
 
 
-  // it might be useful to open up a line of communication from the extension back to this page script,
-  // again, this will have to pass through DOM events. For now speed is of no concern so I will use jQuery
-  document.addEventListener('jspsych-activate', (evt) => {
+  //it might be useful to open up a line of communication from the extension back to this page script,
+  //again, this will have to pass through DOM events. For now speed is of no concern so I will use jQuery
+  document.addEventListener("jspsych-activate", function(evt){
 	  module.hardwareConnected = true;
-  });
+  })
+
 
 
   return module;
-}());
+})();
 
 // methods used in multiple modules //
-jsPsych.utils = (function () {
-  const module = {};
+jsPsych.utils = (function() {
 
-  module.flatten = function (arr, out) {
-    out = (typeof out === 'undefined') ? [] : out;
-    for (let i = 0; i < arr.length; i++) {
-      if (Array.isArray(arr[i])) {
-        module.flatten(arr[i], out);
-      } else {
-        out.push(arr[i]);
-      }
-    }
-    return out;
-  };
+	var module = {};
 
-  module.unique = function (arr) {
-    const out = [];
-    for (let i = 0; i < arr.length; i++) {
-      if (arr.indexOf(arr[i]) == i) {
-        out.push(arr[i]);
-      }
-    }
-    return out;
-  };
+	module.flatten = function(arr, out) {
+		out = (typeof out === 'undefined') ? [] : out;
+		for (var i = 0; i < arr.length; i++) {
+			if (Array.isArray(arr[i])) {
+				module.flatten(arr[i], out);
+			} else {
+				out.push(arr[i]);
+			}
+		}
+		return out;
+	}
 
-  module.deepCopy = function (obj) {
-    if (!obj) return obj;
-    let out;
-    if (Array.isArray(obj)) {
+	module.unique = function(arr) {
+		var out = [];
+		for (var i = 0; i < arr.length; i++) {
+			if (arr.indexOf(arr[i]) == i) {
+				out.push(arr[i]);
+			}
+		}
+		return out;
+	}
+
+	module.deepCopy = function(obj) {
+    if(!obj) return obj;
+    var out;
+    if(Array.isArray(obj)){
       out = [];
-      for (let i = 0; i < obj.length; i++) {
+      for(var i = 0; i<obj.length; i++){
         out.push(module.deepCopy(obj[i]));
       }
       return out;
-    } if (typeof obj === 'object') {
+    } else if(typeof obj === 'object'){
       out = {};
-      for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
+      for(var key in obj){
+        if(obj.hasOwnProperty(key)){
           out[key] = module.deepCopy(obj[key]);
         }
       }
       return out;
+    } else {
+      return obj;
     }
-    return obj;
-  };
+  }
 
-  return module;
-}());
+	return module;
+})();
 
 // polyfill for Object.assign to support IE
-if (typeof Object.assign !== 'function') {
+if (typeof Object.assign != 'function') {
   Object.assign = function (target, varArgs) { // .length of function is 2
+    'use strict';
     if (target == null) { // TypeError if undefined or null
       throw new TypeError('Cannot convert undefined or null to object');
     }
 
-    const to = Object(target);
+    var to = Object(target);
 
-    for (let index = 1; index < arguments.length; index++) {
-      const nextSource = arguments[index];
+    for (var index = 1; index < arguments.length; index++) {
+      var nextSource = arguments[index];
 
       if (nextSource != null) { // Skip over if undefined or null
-        for (const nextKey in nextSource) {
+        for (var nextKey in nextSource) {
           // Avoid bugs when hasOwnProperty is shadowed
           if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
             to[nextKey] = nextSource[nextKey];
@@ -2398,29 +2482,30 @@ if (typeof Object.assign !== 'function') {
 
 // polyfill for Array.includes to support IE
 if (!Array.prototype.includes) {
-  Array.prototype.includes = function (searchElement /* , fromIndex */) {
+  Array.prototype.includes = function(searchElement /*, fromIndex*/) {
+    'use strict';
     if (this == null) {
       throw new TypeError('Array.prototype.includes called on null or undefined');
     }
 
-    const O = Object(this);
-    const len = parseInt(O.length, 10) || 0;
+    var O = Object(this);
+    var len = parseInt(O.length, 10) || 0;
     if (len === 0) {
       return false;
     }
-    const n = parseInt(arguments[1], 10) || 0;
-    let k;
+    var n = parseInt(arguments[1], 10) || 0;
+    var k;
     if (n >= 0) {
       k = n;
     } else {
       k = len + n;
-      if (k < 0) { k = 0; }
+      if (k < 0) {k = 0;}
     }
-    let currentElement;
+    var currentElement;
     while (k < len) {
       currentElement = O[k];
-      if (searchElement === currentElement
-         || (searchElement !== searchElement && currentElement !== currentElement)) { // NaN !== NaN
+      if (searchElement === currentElement ||
+         (searchElement !== searchElement && currentElement !== currentElement)) { // NaN !== NaN
         return true;
       }
       k++;
@@ -2431,7 +2516,7 @@ if (!Array.prototype.includes) {
 
 // polyfill for Array.isArray
 if (!Array.isArray) {
-  Array.isArray = function (arg) {
+  Array.isArray = function(arg) {
     return Object.prototype.toString.call(arg) === '[object Array]';
   };
 }
