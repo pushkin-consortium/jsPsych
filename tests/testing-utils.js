@@ -1,13 +1,15 @@
-exports.pressKey = function (key) {
+const pressKey = (key) => {
   document.querySelector('.jspsych-display-element').dispatchEvent(new KeyboardEvent('keydown', { keyCode: key }));
   document.querySelector('.jspsych-display-element').dispatchEvent(new KeyboardEvent('keyup', { keyCode: key }));
 };
 
-exports.mouseDownMouseUpTarget = function (target) {
+const mouseDownMouseUpTarget = (target) => {
   target.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
   target.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
 };
 
-exports.clickTarget = function (target) {
+const clickTarget = (target) => {
   target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 };
+
+export default { pressKey, mouseDownMouseUpTarget, clickTarget };
