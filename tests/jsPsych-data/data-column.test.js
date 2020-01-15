@@ -32,11 +32,11 @@ describe('DataColumn', () => {
   });
 
   test('variance', () => {
-    expect(jsPsych.data.get().select('value').variance()).toBe((Math.pow(200, 2) + Math.pow(100, 2) + Math.pow(100, 2) + Math.pow(200, 2)) / 5);
+    expect(jsPsych.data.get().select('value').variance()).toBe((Math.pow(200, 2) + Math.pow(100, 2) + Math.pow(100, 2) + Math.pow(200, 2)) / (5 - 1));
   });
 
   test('sd', () => {
-    expect(jsPsych.data.get().select('value').sd()).toBe(Math.sqrt((Math.pow(200, 2) + Math.pow(100, 2) + Math.pow(100, 2) + Math.pow(200, 2)) / 5));
+    expect(jsPsych.data.get().select('value').sd()).toBe(Math.sqrt((Math.pow(200, 2) + Math.pow(100, 2) + Math.pow(100, 2) + Math.pow(200, 2)) / (5 - 1)));
   });
 
   test('median', () => {
