@@ -1,4 +1,4 @@
-import jsPsych from '../src/jspsych';
+import jsPsych from '../../src/jspsych';
 
 const data = [
   { value: 100, filter: true },

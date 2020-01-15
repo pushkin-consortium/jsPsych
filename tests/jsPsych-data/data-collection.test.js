@@ -1,4 +1,4 @@
-import jsPsych from '../src/jspsych';
+import jsPsych from '../../src/jspsych';
 
 // create a sample map
 let data = [

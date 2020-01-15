@@ -1,7 +1,7 @@
-import jsPsych from '../src/jspsych';
-import utils from './testing-utils';
+import jsPsych from '../../src/jspsych';
+import utils from '../testing-utils';
 
-require('../plugins/jspsych-html-keyboard-response');
+require('../../plugins/jspsych-html-keyboard-response');
 
 describe('Basic data recording', () => {
   test('should be able to get rt after running experiment', () => {
