@@ -7,11 +7,11 @@ test('shuffle', () => {
   expect(jsPsych.randomization.shuffle(arr)).toEqual([1, 6, 2, 5, 3, 4]);
 });
 
-// test('shuffle in alternating groups', () => {
-//   Math.random = jest.fn().mockImplementation(() => 0.5);
-//   const toShuffle = [['a', 'b', 'c'], [1, 2, 3]];
-//   expect(jsPsych.randomization.shuffleAlternateGroups(toShuffle)).toEqual(['a', 1, 'c', 3, 'b', 2]);
-// });
+test('shuffle in alternating groups', () => {
+  Math.random = jest.fn().mockImplementation(() => 0.5);
+  const toShuffle = [['a', 'b', 'c'], [1, 2, 3]];
+  expect(jsPsych.randomization.shuffleAlternateGroups(toShuffle)).toEqual(['a', 1, 'c', 3, 'b', 2]);
+});
 
 test('randomID', () => {
   // mock function that accepts a value that will be returned for one call.
